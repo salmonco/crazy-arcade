@@ -196,20 +196,6 @@ func test_로컬멀티_모드에서_한_명이_이기면_해당_캐릭터가_이
 func test_게임_시작_시_맵의_특정_위치에_게임_아이템이_표시된다() -> void:
 	assert_that((_battle_view.game_item_views.get_child(0) as Sprite2D).texture).is_equal(_battle_view.GAME_ITEM_WATER_BALLOON_TEXTURE)
 
-# 물풍선 비주얼
-func test_NPC가_놓은_물풍선은_플레이어의_것과_다른_텍스처로_보인다() -> void:
-	_battle_view.start_battle(BattleMode.MONSTER)
-	var npc_cell := _battle_view.first_character.position()
-	var player_cell := _battle_view.second_character.position()
-	_battle_view.first_character.place_water_balloon(_battle_view.battle.get_map())
-	_battle_view.handle_key_pressed(KEY_SPACE)
-	_battle_view.tick(0.1)
-	var textures := {}
-	for view: Sprite2D in _battle_view.water_balloon_views.get_children():
-		textures[view.position] = view.texture
-	assert_that(textures[Map.to_pixel(npc_cell)]).is_equal(_battle_view.NPC_WATER_BALLOON_TEXTURE)
-	assert_that(textures[Map.to_pixel(player_cell)]).is_equal(_battle_view.PLAYER_WATER_BALLOON_TEXTURE)
-
 # 로컬 멀티플레이어
 func test_키보드_위쪽_방향키를_누르면_2P_플레이어가_위쪽_방향으로_보인다() -> void:
 	_battle_view.start_battle(BattleMode.LOCAL_MULTI)

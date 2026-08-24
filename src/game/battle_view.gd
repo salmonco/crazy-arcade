@@ -192,8 +192,7 @@ func _render_water_balloons() -> void:
 
 	for water_balloon in battle.get_map().water_balloons():
 		var view := Sprite2D.new()
-		if water_balloon.placed_by is Npc \
-			or water_balloon.placed_by.number == 1:
+		if water_balloon.placed_by is Npc:
 			view.texture = NPC_WATER_BALLOON_TEXTURE
 		else:
 			view.texture = PLAYER_WATER_BALLOON_TEXTURE
