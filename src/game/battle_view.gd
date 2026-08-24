@@ -8,7 +8,9 @@ const WATER_STREAM_TEXTURES: Dictionary[String, Texture2D] = {
 }
 const WATER_BALLOON_WATER_MELON_TEXTURE: Texture2D = preload("res://assets/water_balloons/water_melon.png")
 const WATER_BALLOON_NIGHTMARE_TEXTURE: Texture2D = preload("res://assets/water_balloons/nightmare.png")
+const WATER_BALLOON_GREEN_FAIRY_TEXTURE: Texture2D = preload("res://assets/water_balloons/green_fairy.png")
 const PLAYER_WATER_BALLOON_TEXTURE := WATER_BALLOON_WATER_MELON_TEXTURE
+const SECOND_PLAYER_WATER_BALLOON_TEXTURE := WATER_BALLOON_GREEN_FAIRY_TEXTURE
 const NPC_WATER_BALLOON_TEXTURE := WATER_BALLOON_NIGHTMARE_TEXTURE
 const GAME_ITEM_WATER_BALLOON_TEXTURE: Texture2D = preload("res://assets/game_items/water_balloon.png")
 const GAME_ITEM_WHITE_POTION_TEXTURE: Texture2D = preload("res://assets/game_items/white_potion.png")
@@ -195,7 +197,10 @@ func _render_water_balloons() -> void:
 		if water_balloon.placed_by is Npc:
 			view.texture = NPC_WATER_BALLOON_TEXTURE
 		else:
-			view.texture = PLAYER_WATER_BALLOON_TEXTURE
+			if water_balloon.placed_by.number == 1:
+				view.texture = PLAYER_WATER_BALLOON_TEXTURE
+			else:
+				view.texture = SECOND_PLAYER_WATER_BALLOON_TEXTURE
 		view.scale = Vector2.ONE * (Map.PIXELS_PER_CELL / 42.0)
 		view.position = Map.to_pixel(water_balloon.position)
 		view.centered = false

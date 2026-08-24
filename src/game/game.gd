@@ -7,7 +7,7 @@ extends Node
 
 var lobby := Lobby.new()
 var current_room: Room
-var player_character := Character.new(Vector2i.ZERO, 0, Color.RED)
+var player_character := Character.new(Vector2i.ZERO, 1, Color.RED)
 var second_player_character: Character
 
 func _ready() -> void:
@@ -37,7 +37,7 @@ func set_local_multi(enabled: bool) -> void:
 func _add_second_player() -> void:
 	if second_player_character != null:
 		return
-	second_player_character = Character.new(Vector2i.ZERO, 0, _second_player_color())
+	second_player_character = Character.new(Vector2i.ZERO, 2, _second_player_color())
 	current_room.add_character(second_player_character)
 
 func _remove_second_player() -> void:

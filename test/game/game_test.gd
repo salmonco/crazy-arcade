@@ -327,3 +327,23 @@ func test_NPC가_놓은_물풍선은_플레이어의_것과_다른_텍스처로_
 		textures[view.position] = view.texture
 	assert_that(textures[Map.to_pixel(player_cell)]).is_equal(_game.battle_view.PLAYER_WATER_BALLOON_TEXTURE)
 	assert_that(textures[Map.to_pixel(npc_cell)]).is_equal(_game.battle_view.NPC_WATER_BALLOON_TEXTURE)
+
+func test_캐릭터의_물풍선은_서로_다른_텍스처로_보인다() -> void:
+	_start_monster_battle_with_second_player()
+	var player_cell := _game.player_character.position()
+	var second_player_cell := _game.second_player_character.position()
+	var npc: Npc
+	for character in _game.current_room.characters():
+		if character is Npc:
+			npc = character
+	var npc_cell := npc.position()
+	npc.place_water_balloon(_game.battle_view.battle.get_map())
+	_game.battle_view.handle_key_pressed(KEY_SHIFT, KEY_LOCATION_LEFT)
+	_game.battle_view.handle_key_pressed(KEY_SHIFT, KEY_LOCATION_RIGHT)
+	_game.battle_view.tick(0.1)
+	var textures := {}
+	for view: Sprite2D in _game.battle_view.water_balloon_views.get_children():
+		textures[view.position] = view.texture
+	assert_that(textures[Map.to_pixel(player_cell)]).is_equal(_game.battle_view.PLAYER_WATER_BALLOON_TEXTURE)
+	assert_that(textures[Map.to_pixel(second_player_cell)]).is_equal(_game.battle_view.SECOND_PLAYER_WATER_BALLOON_TEXTURE)
+	assert_that(textures[Map.to_pixel(npc_cell)]).is_equal(_game.battle_view.NPC_WATER_BALLOON_TEXTURE)
