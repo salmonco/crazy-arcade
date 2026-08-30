@@ -329,3 +329,22 @@ func test_캐릭터는_물방울에_갇혀_있는_상대_팀의_캐릭터를_아
 	assert_bool(character2.is_trapped()).is_false()
 	assert_bool(character2.is_out).is_true()
 	assert_bool(_map.has_character(Vector2i(2, 3))).is_false()
+
+# 같은 팀 물방울 구출
+func test_캐릭터는_물방울에_갇혀_있는_같은_팀의_캐릭터를_구출할_수_있다() -> void:
+	var character1 := Character.new(Vector2i(3, 4), 1, Color.RED)
+	var character2 := Character.new(Vector2i(2, 3), 2, Color.BLUE)
+	_map.add_character(character1)
+	_map.add_character(character2)
+	_map.add_water_streams(Vector2i(2, 3), 1)
+	_map.tick(WaterStream.DURATION * 0.5)
+	assert_bool(character2.is_trapped()).is_true()
+	assert_bool(character1.is_trapped()).is_false()
+	_map.tick(WaterStream.DURATION)
+	assert_bool(character2.is_trapped()).is_true()
+	assert_bool(character1.is_trapped()).is_false()
+	character1.move(Vector2i.LEFT, 0.25, _map.water_balloon_positions())
+	character1.move(Vector2i.UP, 0.25, _map.water_balloon_positions())
+	_map.tick(Bubble.ALIVE_SECONDS * 0.5)
+	assert_bool(character2.is_trapped()).is_false()
+	assert_bool(character1.is_trapped()).is_false()

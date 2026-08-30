@@ -66,6 +66,7 @@ func tick(delta: float) -> void:
 
 	_check_chain_water_streams()
 	_check_trap_character_in_bubble()
+	_check_rescue_by_team()
 	_check_out_by_enemy()
 
 	# 게임 아이템 먹음
@@ -177,6 +178,20 @@ func _check_trap_character_in_bubble() -> void:
 			continue
 		if _can_water_streams_trap(character):
 			character.trapped()
+
+func _check_rescue_by_team() -> void:
+	var trapped_characters: Array[Character] = []
+	for character in _characters:
+		if character.is_trapped():
+			trapped_characters.append(character)
+	for trapped_character in trapped_characters:
+		for character in _characters:
+			if character == trapped_character  \
+				or character.is_trapped() \
+				or character.color != trapped_character.color \
+				or character.position() != trapped_character.position():
+				continue
+			trapped_character.rescued()
 
 func _check_out_by_enemy() -> void:
 	var original_characters: Array[Character] = _characters.duplicate()
