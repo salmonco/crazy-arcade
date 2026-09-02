@@ -347,3 +347,16 @@ func test_캐릭터의_물풍선은_서로_다른_텍스처로_보인다() -> vo
 	assert_that(textures[Map.to_pixel(player_cell)]).is_equal(_game.battle_view.PLAYER_WATER_BALLOON_TEXTURE)
 	assert_that(textures[Map.to_pixel(second_player_cell)]).is_equal(_game.battle_view.SECOND_PLAYER_WATER_BALLOON_TEXTURE)
 	assert_that(textures[Map.to_pixel(npc_cell)]).is_equal(_game.battle_view.NPC_WATER_BALLOON_TEXTURE)
+
+# 배틀 종료
+func test_배틀이_종료되면_몇_초_후에_다시_방으로_이동한다() -> void:
+	_start_monster_battle()
+	assert_bool(_game.battle_view.visible).is_true()
+	assert_bool(_game.room_view.visible).is_false()
+	_game.battle_view.battle.get_map().let_character_out(_game.player_character)
+	_game.battle_view.tick(0.1)
+	assert_bool(_game.battle_view.visible).is_true()
+	assert_bool(_game.room_view.visible).is_false()
+	_game.battle_view.tick(5.0)
+	assert_bool(_game.battle_view.visible).is_false()
+	assert_bool(_game.room_view.visible).is_true()
