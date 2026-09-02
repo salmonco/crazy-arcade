@@ -185,11 +185,10 @@ func _check_rescue_by_team() -> void:
 		if character.is_trapped():
 			trapped_characters.append(character)
 	for trapped_character in trapped_characters:
-		for character in _characters:
-			if character == trapped_character  \
-				or character.is_trapped() \
-				or character.color != trapped_character.color \
-				or character.position() != trapped_character.position():
+		for rescuer in _characters:
+			if rescuer.is_trapped() \
+				or rescuer.color != trapped_character.color \
+				or rescuer.position() != trapped_character.position():
 				continue
 			trapped_character.rescued()
 
