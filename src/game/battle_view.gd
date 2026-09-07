@@ -20,6 +20,8 @@ const ZOMKKAN_VIEW := preload("res://scenes/zomkkan_view.tscn")
 const BAZZI_VIEW := preload("res://scenes/bazzi_view.tscn")
 var view_by_character: Dictionary[Character, CharacterView] = {}
 
+signal game_over()
+
 @onready var character_views: Node2D = $CharacterViews
 @onready var water_balloon_views: Node2D = $WaterBalloonViews
 @onready var water_stream_views: Node2D = $WaterStreamViews
@@ -120,6 +122,8 @@ func tick(delta: float) -> void:
 	_render_characters()
 	_render_game_items()
 	_render_game_over_label()
+	if battle.should_go_to_room:
+		game_over.emit()
 
 func _place_game_items() -> void:
 	# 물풍선 아이템 배치

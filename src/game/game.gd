@@ -17,6 +17,7 @@ func _ready() -> void:
 	room_view.monster_mode_check.toggled.connect(set_monster_mode)
 	room_view.start_button.pressed.connect(start_game)
 	room_view.local_multi_check.toggled.connect(set_local_multi)
+	battle_view.game_over.connect(finish_game)
 
 func create_room() -> void:
 	enter_room(lobby.create_room().id)
@@ -26,6 +27,11 @@ func start_game() -> void:
 	battle_view.show_battle(current_room.get_battle())
 	room_view.visible = false
 	battle_view.visible = true
+
+func finish_game() -> void:
+	current_room.game_over()
+	room_view.visible = true
+	battle_view.visible = false
 
 func set_local_multi(enabled: bool) -> void:
 	if enabled:

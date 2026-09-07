@@ -32,6 +32,10 @@ func game_start() -> void:
 		map.add_character(character)
 	_battle = Battle.new(map, battle_mode)
 
+func game_over() -> void:
+	for character in _characters:
+		character.init_player()
+
 func get_battle() -> Battle:
 	return _battle
 

@@ -1,7 +1,11 @@
 class_name Character
 extends RefCounted
 
+const SPEED := 4.0
 const SPEED_IN_BUBBLE := 1.0
+const WATER_BALLOON_COUNT := 1
+const WATER_STREAM_LENGTH := 1
+const FACING_DIRECTION := Vector2i.DOWN
 
 # 스프라이트(64x96)를 offset(0,-32)로 그린 결과라 아트가 바뀌면 같이 바뀐다.
 const FEET_FROM_ANCHOR := 0.5
@@ -19,13 +23,13 @@ const TRAP_BOX_SIDE := TRAP_REACH_SIDE - WaterStream.TRAP_REACH_EXPOSED
 var continuous_position: Vector2
 var is_out: bool = false
 var bubble: Bubble = null
-var facing: Vector2i = Vector2i.DOWN
+var facing: Vector2i = FACING_DIRECTION
 var number: int
 var color: Color
 
-var max_water_balloon_count := 1
-var max_water_stream_length := 1
-var speed := 4.0
+var max_water_balloon_count := WATER_BALLOON_COUNT
+var max_water_stream_length := WATER_STREAM_LENGTH
+var speed := SPEED
 
 var joined_room_id: String
 
@@ -33,6 +37,14 @@ func _init(start_position: Vector2i, seat_number: int = 0, team_color: Color = C
 	continuous_position = start_position
 	number = seat_number
 	color = team_color
+
+func init_player() -> void:
+	speed = Character.SPEED
+	max_water_balloon_count = Character.WATER_BALLOON_COUNT
+	max_water_stream_length = Character.WATER_STREAM_LENGTH
+	bubble = null
+	facing = Character.FACING_DIRECTION
+	is_out = false
 
 func move(direction: Vector2i, delta: float, water_balloon_positions: Array[Vector2i]) -> bool:
 	if direction != Vector2i.ZERO:
