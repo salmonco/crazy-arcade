@@ -7,7 +7,7 @@ extends Node
 
 var lobby := Lobby.new()
 var current_room: Room
-var player_character := Character.new(Vector2i.ZERO, 0, Color.RED)
+var player_character := Character.new(Vector2i.ZERO, 1, Color.RED)
 var second_player_character: Character
 
 func _ready() -> void:
@@ -17,6 +17,7 @@ func _ready() -> void:
 	room_view.monster_mode_check.toggled.connect(set_monster_mode)
 	room_view.start_button.pressed.connect(start_game)
 	room_view.local_multi_check.toggled.connect(set_local_multi)
+	battle_view.game_over.connect(finish_game)
 
 func create_room() -> void:
 	enter_room(lobby.create_room().id)
@@ -26,6 +27,11 @@ func start_game() -> void:
 	battle_view.show_battle(current_room.get_battle())
 	room_view.visible = false
 	battle_view.visible = true
+
+func finish_game() -> void:
+	current_room.game_over()
+	room_view.visible = true
+	battle_view.visible = false
 
 func set_local_multi(enabled: bool) -> void:
 	if enabled:
@@ -37,7 +43,7 @@ func set_local_multi(enabled: bool) -> void:
 func _add_second_player() -> void:
 	if second_player_character != null:
 		return
-	second_player_character = Character.new(Vector2i.ZERO, 0, _second_player_color())
+	second_player_character = Character.new(Vector2i.ZERO, 2, _second_player_color())
 	current_room.add_character(second_player_character)
 
 func _remove_second_player() -> void:

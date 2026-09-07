@@ -8,7 +8,9 @@ const WATER_STREAM_TEXTURES: Dictionary[String, Texture2D] = {
 }
 const WATER_BALLOON_WATER_MELON_TEXTURE: Texture2D = preload("res://assets/water_balloons/water_melon.png")
 const WATER_BALLOON_NIGHTMARE_TEXTURE: Texture2D = preload("res://assets/water_balloons/nightmare.png")
+const WATER_BALLOON_GREEN_FAIRY_TEXTURE: Texture2D = preload("res://assets/water_balloons/green_fairy.png")
 const PLAYER_WATER_BALLOON_TEXTURE := WATER_BALLOON_WATER_MELON_TEXTURE
+const SECOND_PLAYER_WATER_BALLOON_TEXTURE := WATER_BALLOON_GREEN_FAIRY_TEXTURE
 const NPC_WATER_BALLOON_TEXTURE := WATER_BALLOON_NIGHTMARE_TEXTURE
 const GAME_ITEM_WATER_BALLOON_TEXTURE: Texture2D = preload("res://assets/game_items/water_balloon.png")
 const GAME_ITEM_WHITE_POTION_TEXTURE: Texture2D = preload("res://assets/game_items/white_potion.png")
@@ -17,6 +19,8 @@ const GAME_ITEM_SPEED_TEXTURE: Texture2D = preload("res://assets/game_items/spee
 const ZOMKKAN_VIEW := preload("res://scenes/zomkkan_view.tscn")
 const BAZZI_VIEW := preload("res://scenes/bazzi_view.tscn")
 var view_by_character: Dictionary[Character, CharacterView] = {}
+
+signal game_over()
 
 @onready var character_views: Node2D = $CharacterViews
 @onready var water_balloon_views: Node2D = $WaterBalloonViews
@@ -118,6 +122,8 @@ func tick(delta: float) -> void:
 	_render_characters()
 	_render_game_items()
 	_render_game_over_label()
+	if battle.should_go_to_room:
+		game_over.emit()
 
 func _place_game_items() -> void:
 	# 물풍선 아이템 배치
@@ -192,11 +198,13 @@ func _render_water_balloons() -> void:
 
 	for water_balloon in battle.get_map().water_balloons():
 		var view := Sprite2D.new()
-		if water_balloon.placed_by is Npc \
-			or water_balloon.placed_by.number == 1:
+		if water_balloon.placed_by is Npc:
 			view.texture = NPC_WATER_BALLOON_TEXTURE
 		else:
-			view.texture = PLAYER_WATER_BALLOON_TEXTURE
+			if water_balloon.placed_by.number == 1:
+				view.texture = PLAYER_WATER_BALLOON_TEXTURE
+			else:
+				view.texture = SECOND_PLAYER_WATER_BALLOON_TEXTURE
 		view.scale = Vector2.ONE * (Map.PIXELS_PER_CELL / 42.0)
 		view.position = Map.to_pixel(water_balloon.position)
 		view.centered = false
