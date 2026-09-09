@@ -201,6 +201,12 @@ func test_다른_방에_들어가면_몬스터_모드_체크가_그_방을_따�
 func test_방의_몬스터_모드_체크가_모드_변경에_연결되어_있다() -> void:
 	assert_bool(_game.room_view.monster_mode_check.toggled.is_connected(_game.set_monster_mode)).is_true()
 
+func test_몬스터_모드를_선택하고_로컬_멀티_모드를_선택해도_2P_플레이어의_자리_번호는_2다() -> void:
+	_game.create_room()
+	_game.room_view.monster_mode_check.button_pressed = true
+	_game.room_view.local_multi_check.button_pressed = true
+	assert_int(_game.second_player_character.number).is_equal(2)
+
 # 방에서 게임 시작
 func test_방에서_게임을_시작하면_배틀_화면이_된다() -> void:
 	_game.create_room()

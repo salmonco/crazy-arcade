@@ -13,7 +13,15 @@ func _init() -> void:
 
 func add_character(character: Character) -> void:
 	character.number = _empty_seat_number()
-	_characters.append(character)
+	if has_npc():
+		var npc := _characters[1]
+		npc.number = 3
+		character.number = 2
+		_characters.erase(npc)
+		_characters.append(character)
+		_characters.append(npc)
+	else:
+		_characters.append(character)
 	character.joined_room_id = id
 
 func _empty_seat_number() -> int:
