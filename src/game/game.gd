@@ -18,6 +18,11 @@ func _ready() -> void:
 	room_view.start_button.pressed.connect(start_game)
 	room_view.local_multi_check.toggled.connect(set_local_multi)
 	battle_view.game_over.connect(finish_game)
+	multiplayer.peer_connected.connect(on_peer_connected)
+
+func on_peer_connected(peer_id: int) -> void:
+	var character := Character.new(Vector2i(1, 2), 0, Color.RED, peer_id)
+	lobby.add_character(character)
 
 func create_room() -> void:
 	enter_room(lobby.create_room().id)
