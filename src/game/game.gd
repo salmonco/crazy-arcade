@@ -68,22 +68,30 @@ func _second_player_color() -> Color:
 		return player_character.color
 	return Team.SECOND_PLAYER_COLOR
 
-func leave_room() -> void:
-	current_room.remove_character(player_character)
+func leave_room(peer_id: int = 0) -> void:
+	if peer_id == 0:
+		current_room.remove_character(player_character)
+	else:
+		var character := lobby.find_character(peer_id)
+		current_room.remove_character(character)
 	_remove_second_player()
 	current_room = null
 	lobby_view.render(lobby)
 	room_view.visible = false
 	lobby_view.visible = true
 
-func enter_room(id: String) -> void:
-	var room := lobby.find_room(id)
+func enter_room(room_id: String, peer_id: int = 0) -> void:
+	var room := lobby.find_room(room_id)
 	if room == null:
 		return
 	if current_room != null:
 		leave_room()
 	current_room = room
-	room.add_character(player_character)
+	if peer_id == 0:
+		room.add_character(player_character)
+	else:
+		var character := lobby.find_character(peer_id)
+		room.add_character(character)
 	room_view.render(room)
 	lobby_view.visible = false
 	room_view.visible = true
