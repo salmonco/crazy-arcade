@@ -1,7 +1,7 @@
 class_name Server
 extends Node
 
-const PORT := 8000
+const PORT := 8080
 
 func _ready() -> void:
 	_create_peer()

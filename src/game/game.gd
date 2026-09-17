@@ -5,7 +5,7 @@ extends Node
 @onready var room_view: RoomView = $RoomView
 @onready var battle_view: BattleView = $BattleView
 
-const URL := "ws://localhost:8000"
+const URL := "ws://localhost:%d" % Server.PORT
 
 var lobby := Lobby.new()
 var current_room: Room
