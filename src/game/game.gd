@@ -24,6 +24,7 @@ func _ready() -> void:
 	battle_view.game_over.connect(finish_game)
 	multiplayer.connected_to_server.connect(on_connected_to_server)
 	multiplayer.peer_connected.connect(on_peer_connected)
+	multiplayer.peer_disconnected.connect(on_peer_disconnected)
 
 func _create_peer() -> void:
 	var peer := WebSocketMultiplayerPeer.new()
