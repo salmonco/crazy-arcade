@@ -69,3 +69,9 @@ func test_피어가_방에서_퇴장하면_방에_피어의_캐릭터가_사라�
 	assert_that(room.find_character(peer_id)).is_equal(character)
 	lobby.leave_room(room.id, peer_id)
 	assert_that(room.find_character(peer_id)).is_null()
+
+func test_로비에_없는_피어는_방에_입장하지_못한다() -> void:
+	var lobby := Lobby.new()
+	var room := lobby.create_room()
+	assert_bool(lobby.enter_room(room.id, 47324)).is_false()
+	assert_array(room.characters()).is_empty()
