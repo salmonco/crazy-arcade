@@ -463,3 +463,16 @@ func test_피어가_접속하고_방에_입장해도_로비엔_해당_피어의_
 	_game.lobby.add_room(room)
 	_game.enter_room(room.id, peer_id)
 	assert_that(_game.lobby.find_character(peer_id)).is_not_null()
+
+func test_나_말고_다른_피어가_방에서_떠나도_방_화면은_유지된다() -> void:
+	var my_peer_id := 47324
+	var other_peer_id := 32412
+	_game.on_peer_connected(my_peer_id)
+	_game.on_peer_connected(other_peer_id)
+	var room := Room.new()
+	_game.lobby.add_room(room)
+	_game.enter_room(room.id, my_peer_id)
+	_game.enter_room(room.id, other_peer_id)
+	assert_bool(_game.room_view.visible).is_true()
+	_game.leave_room(other_peer_id)
+	assert_bool(_game.room_view.visible).is_true()

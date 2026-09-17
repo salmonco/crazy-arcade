@@ -19,6 +19,11 @@ func _ready() -> void:
 	room_view.local_multi_check.toggled.connect(set_local_multi)
 	battle_view.game_over.connect(finish_game)
 	multiplayer.peer_connected.connect(on_peer_connected)
+	_create_peer()
+
+func _create_peer() -> void:
+	var peer := WebSocketMultiplayerPeer.new()
+	multiplayer.multiplayer_peer = peer
 
 func on_peer_connected(peer_id: int) -> void:
 	var character := Character.new(Vector2i(1, 2), 0, Color.RED, peer_id)
@@ -74,11 +79,12 @@ func leave_room(peer_id: int = 0) -> void:
 	else:
 		var character := lobby.find_character(peer_id)
 		current_room.remove_character(character)
-	_remove_second_player()
-	current_room = null
-	lobby_view.render(lobby)
-	room_view.visible = false
-	lobby_view.visible = true
+	if peer_id == 0 or multiplayer.multiplayer_peer.get_unique_id() == peer_id:
+		_remove_second_player()
+		current_room = null
+		lobby_view.render(lobby)
+		room_view.visible = false
+		lobby_view.visible = true
 
 func enter_room(room_id: String, peer_id: int = 0) -> void:
 	var room := lobby.find_room(room_id)
