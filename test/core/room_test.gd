@@ -93,6 +93,19 @@ func test_몬스터_모드면_방에_NPC가_들어와_있는다() -> void:
 	room.set_battle_mode(BattleMode.MONSTER)
 	assert_bool(room.has_npc()).is_true()
 
+func test_NPC만_남은_방에_캐릭터가_들어와도_NPC는_뒷자리로_밀린다() -> void:
+	var room := Room.new()
+	var first := Character.new(Vector2i(4, 2), 1, Color.RED)
+	room.add_character(first)
+	room.set_battle_mode(BattleMode.MONSTER)
+	var npc := room.characters()[1]
+	room.remove_character(first)
+	assert_array(room.characters()).is_equal([npc])
+	var second := Character.new(Vector2i(9, 10), 1, Color.BLUE)
+	room.add_character(second)
+	assert_array(room.characters()).is_equal([second, npc])
+	assert_int(second.number).is_not_equal(npc.number)
+
 # 멀티 플레이어
 func test_접속된_피어_ID로_해당_캐릭터를_찾을_수_있다() -> void:
 	var peer_id := 1

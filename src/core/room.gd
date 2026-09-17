@@ -13,15 +13,15 @@ func _init() -> void:
 	id = UUID.v4()
 
 func add_character(character: Character) -> void:
-	character.number = _empty_seat_number()
 	if has_npc():
-		var npc := _characters[1]
-		npc.number = 3
-		character.number = 2
+		var npc := _npc()
 		_characters.erase(npc)
+		character.number = _empty_seat_number()
 		_characters.append(character)
+		npc.number = _empty_seat_number()
 		_characters.append(npc)
 	else:
+		character.number = _empty_seat_number()
 		_characters.append(character)
 	character.joined_room_id = id
 
@@ -95,3 +95,9 @@ func _remove_npcs() -> void:
 func _add_npc() -> void:
 	var npc := Npc.new(Vector2i.ZERO, 0, Team.MONSTER_COLOR)
 	add_character(npc)
+
+func _npc() -> Npc:
+	for character in _characters:
+		if character is Npc:
+			return character
+	return null
