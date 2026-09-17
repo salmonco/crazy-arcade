@@ -3,10 +3,12 @@ extends Node
 
 const PORT := 8080
 
+var lobby := Lobby.new()
+
 func _ready() -> void:
 	_create_peer()
-	multiplayer.peer_connected.connect(_on_peer_connected)
-	multiplayer.peer_disconnected.connect(_on_peer_disconnected)
+	multiplayer.peer_connected.connect(on_peer_connected)
+	multiplayer.peer_disconnected.connect(on_peer_disconnected)
 
 func _create_peer() -> void:
 	var peer := WebSocketMultiplayerPeer.new()
@@ -17,8 +19,12 @@ func _create_peer() -> void:
 	multiplayer.multiplayer_peer = peer
 	print("server listen on %d" % PORT)
 
-func _on_peer_connected(id: int) -> void:
+func on_peer_connected(id: int) -> void:
 	print("피어 접속: %d" % id)
+	var character := Character.new(Vector2i.ZERO, 0, Color.RED, id)
+	lobby.add_character(character)
 
-func _on_peer_disconnected(id: int) -> void:
+func on_peer_disconnected(id: int) -> void:
 	print("피어 접속 끊김: %d" % id)
+	var character := lobby.find_character(id)
+	lobby.remove_character(character)
