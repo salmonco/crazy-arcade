@@ -29,7 +29,7 @@ func test_ID로_방을_찾는다() -> void:
 	var room := lobby.create_room()
 	assert_that(lobby.find_room(room.id)).is_equal(room)
 
-# 피어
+# 멀티플레이어
 func test_피어는_방에_입장할_수_있다() -> void:
 	var lobby := Lobby.new()
 	var peer_id := 12345

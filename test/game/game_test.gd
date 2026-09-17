@@ -425,7 +425,7 @@ func test_배틀이_종료되고_다시_배틀을_시작하면_캐릭터의_아�
 	_game.battle_view.tick(Battle.GAME_OVER_AFTER_SECOND)
 	assert_bool(_game.player_character.is_out).is_false()
 
-# 피어
+# 멀티플레이어
 func test_피어가_접속하면_로비에_해당_피어의_캐릭터가_생긴다() -> void:
 	assert_that(_game.lobby.find_character(_game.peer_id)).is_not_null()
 

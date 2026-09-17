@@ -106,7 +106,7 @@ func test_NPC만_남은_방에_캐릭터가_들어와도_NPC는_뒷자리로_밀
 	assert_array(room.characters()).is_equal([second, npc])
 	assert_int(second.number).is_not_equal(npc.number)
 
-# 멀티 플레이어
+# 멀티플레이어
 func test_접속된_피어_ID로_해당_캐릭터를_찾을_수_있다() -> void:
 	var peer_id := 1
 	var room := Room.new()
