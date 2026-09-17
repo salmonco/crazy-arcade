@@ -8,18 +8,23 @@ var _game: Game
 func before_test() -> void:
 	_runner = scene_runner(SCENE_PATH)
 	_game = _runner.scene()
+	_on_connected(47324)
+
+func _on_connected(peer_id: int) -> void:
+	var character := Character.new(Vector2i.ZERO, 0, Color.RED, peer_id)
+	_game.lobby.add_character(character)
+	_game.peer_id = peer_id
+	_game.player_character = character
 
 # 로비에서 방 입장
 func test_방_ID로_입장하면_방_화면이_된다() -> void:
-	var room := Room.new()
-	_game.lobby.add_room(room)
+	var room := _game.lobby.create_room()
 	_game.enter_room(room.id)
 	assert_bool(_game.room_view.visible).is_true()
 	assert_bool(_game.lobby_view.visible).is_false()
 
 func test_없는_방_ID로는_입장하지_못한다() -> void:
-	var room := Room.new()
-	_game.lobby.add_room(room)
+	_game.lobby.create_room()
 	_game.enter_room("없는-방-id")
 	assert_bool(_game.room_view.visible).is_false()
 	assert_bool(_game.lobby_view.visible).is_true()
@@ -54,7 +59,7 @@ func test_로비_목록에서_방을_고르면_그_방에_입장한다() -> void
 	_create_room_and_leave()
 	_create_room_and_leave()
 	var second_room := _game.lobby.rooms[1]
-	_game.lobby_view.room_entry(1).pressed.emit()
+	_game.enter_room(second_room.id)
 	assert_that(_game.current_room).is_equal(second_room)
 	assert_bool(_game.room_view.visible).is_true()
 
@@ -310,10 +315,9 @@ func _create_room_and_leave() -> void:
 	_game.leave_room()
 
 func _room_with_characters(count: int) -> Room:
-	var room := Room.new()
+	var room := _game.lobby.create_room()
 	for i in count:
 		room.add_character(Character.new(Vector2i(i + 1, i + 3), i + 1, Color.RED))
-	_game.lobby.add_room(room)
 	return room
 
 # 물풍선 비주얼
@@ -421,58 +425,67 @@ func test_배틀이_종료되고_다시_배틀을_시작하면_캐릭터의_아�
 	_game.battle_view.tick(Battle.GAME_OVER_AFTER_SECOND)
 	assert_bool(_game.player_character.is_out).is_false()
 
-# 멀티 플레이어
+# 피어
 func test_피어가_접속하면_로비에_해당_피어의_캐릭터가_생긴다() -> void:
-	var peer_id := 47324
-	assert_that(_game.lobby.find_character(peer_id)).is_null()
-	_game.on_peer_connected(peer_id)
-	assert_that(_game.lobby.find_character(peer_id)).is_not_null()
+	assert_that(_game.lobby.find_character(_game.peer_id)).is_not_null()
+
+func test_피어가_접속을_끊으면_로비에_해당_피어의_캐릭터가_사라진다() -> void:
+	assert_that(_game.lobby.find_character(_game.peer_id)).is_not_null()
+	_game.on_peer_disconnected()
+	assert_that(_game.lobby.find_character(_game.peer_id)).is_null()
+
+func test_피어가_방에_입장한_상태인데_접속을_끊으면_방과_로비에서_피어의_캐릭터가_사라진다() -> void:
+	var room := _game.lobby.create_room()
+	_game.enter_room(room.id)
+	var character := _game.lobby.find_character(_game.peer_id)
+	assert_that(_game.lobby.find_room(room.id).find_character(_game.peer_id)).is_equal(character)
+	assert_that(_game.lobby.find_character(_game.peer_id)).is_not_null()
+	_game.on_peer_disconnected()
+	assert_that(_game.lobby.find_room(room.id).find_character(_game.peer_id)).is_null()
+	assert_that(_game.lobby.find_character(_game.peer_id)).is_null()
 
 func test_피어가_방에_입장하면_방에_해당_피어의_캐릭터가_생긴다() -> void:
-	var peer_id := 47324
 	var peer2_id := 32412
-	_game.on_peer_connected(peer_id)
 	_game.on_peer_connected(peer2_id)
-	var room := Room.new()
-	_game.lobby.add_room(room)
-	assert_that(room.find_character(peer_id)).is_null()
+	var room := _game.lobby.create_room()
+	assert_that(room.find_character(_game.peer_id)).is_null()
 	assert_that(room.find_character(peer2_id)).is_null()
-	_game.enter_room(room.id, peer_id)
-	assert_that(room.find_character(peer_id)).is_not_null()
+	_game.enter_room(room.id)
+	assert_that(room.find_character(_game.peer_id)).is_not_null()
 	assert_that(room.find_character(peer2_id)).is_null()
 
 func test_피어가_방에서_떠나면_방에_해당_피어의_캐릭터가_빠진다() -> void:
-	var peer_id := 47324
 	var peer2_id := 32412
-	_game.on_peer_connected(peer_id)
 	_game.on_peer_connected(peer2_id)
-	var room := Room.new()
-	_game.lobby.add_room(room)
-	_game.enter_room(room.id, peer_id)
-	assert_that(room.find_character(peer_id)).is_not_null()
+	var room := _game.lobby.create_room()
+	_game.enter_room(room.id)
+	assert_that(room.find_character(_game.peer_id)).is_not_null()
 	assert_that(room.find_character(peer2_id)).is_null()
-	_game.leave_room(peer_id)
-	assert_that(room.find_character(peer_id)).is_null()
+	_game.leave_room()
+	assert_that(room.find_character(_game.peer_id)).is_null()
 	assert_that(room.find_character(peer2_id)).is_null()
 
 func test_피어가_접속하고_방에_입장해도_로비엔_해당_피어의_캐릭터가_남아있다() -> void:
-	var peer_id := 47324
-	_game.on_peer_connected(peer_id)
-	assert_that(_game.lobby.find_character(peer_id)).is_not_null()
-	var room := Room.new()
-	_game.lobby.add_room(room)
-	_game.enter_room(room.id, peer_id)
-	assert_that(_game.lobby.find_character(peer_id)).is_not_null()
+	assert_that(_game.lobby.find_character(_game.peer_id)).is_not_null()
+	var room := _game.lobby.create_room()
+	_game.enter_room(room.id)
+	assert_that(_game.lobby.find_character(_game.peer_id)).is_not_null()
+
+func test_다른_피어_말고_내가_방에_입장해야_방_화면이_보인다() -> void:
+	var peer2_id := 32412
+	_game.on_peer_connected(peer2_id)
+	var room := _game.lobby.create_room()
+	_game.lobby.enter_room(room.id, peer2_id)
+	assert_bool(_game.room_view.visible).is_false()
+	_game.enter_room(room.id)
+	assert_bool(_game.room_view.visible).is_true()
 
 func test_나_말고_다른_피어가_방에서_떠나도_방_화면은_유지된다() -> void:
-	var my_peer_id := 47324
-	var other_peer_id := 32412
-	_game.on_peer_connected(my_peer_id)
-	_game.on_peer_connected(other_peer_id)
-	var room := Room.new()
-	_game.lobby.add_room(room)
-	_game.enter_room(room.id, my_peer_id)
-	_game.enter_room(room.id, other_peer_id)
+	var peer2_id := 32412
+	_game.on_peer_connected(peer2_id)
+	var room := _game.lobby.create_room()
+	_game.enter_room(room.id)
+	_game.lobby.enter_room(room.id, peer2_id)
 	assert_bool(_game.room_view.visible).is_true()
-	_game.leave_room(other_peer_id)
+	_game.lobby.leave_room(room.id, peer2_id)
 	assert_bool(_game.room_view.visible).is_true()
