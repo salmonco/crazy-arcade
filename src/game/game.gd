@@ -46,7 +46,13 @@ func on_peer_connected(id: int) -> void:
 
 func on_peer_disconnected(id: int) -> void:
 	if current_room != null:
-		leave_room()
+		var character := lobby.find_character(peer_id)
+		current_room.remove_character(character)
+		_remove_second_player()
+		current_room = null
+		lobby_view.render(lobby)
+		room_view.visible = false
+		lobby_view.visible = true
 	var character := lobby.find_character(id)
 	lobby.remove_character(character)
 
@@ -58,20 +64,34 @@ func request_create_room() -> void:
 func request_enter_room(room_id: String) -> void:
 	pass
 
+@rpc("any_peer", "call_remote", "reliable")
+func request_leave_room(room_id: String) -> void:
+	pass
+
 @rpc("authority", "call_remote", "reliable")
-func room_changed(room: Room) -> void:
-	if room == null:
-		return
-	current_room = room
-	room_view.render(room)
-	lobby_view.visible = false
-	room_view.visible = true
+func lobby_changed(_lobby: Lobby) -> void:
+	lobby_view.render(_lobby)
+	var character := _lobby.find_character(peer_id)
+	if character.joined_room_id == "":
+		_remove_second_player()
+		current_room = null
+		room_view.visible = false
+		lobby_view.visible = true
+	else:
+		var room := _lobby.find_room(character.joined_room_id)
+		current_room = room
+		room_view.render(room)
+		lobby_view.visible = false
+		room_view.visible = true
 
 func create_room() -> void:
 	request_create_room.rpc_id(1)
 
 func enter_room(room_id: String) -> void:
 	request_enter_room.rpc_id(1, room_id)
+
+func leave_room(room_id: String) -> void:
+	request_leave_room.rpc_id(1, room_id)
 
 func start_game() -> void:
 	current_room.game_start()
@@ -113,12 +133,3 @@ func _second_player_color() -> Color:
 	if current_room.battle_mode == BattleMode.MONSTER:
 		return player_character.color
 	return Team.SECOND_PLAYER_COLOR
-
-func leave_room() -> void:
-	var character := lobby.find_character(peer_id)
-	current_room.remove_character(character)
-	_remove_second_player()
-	current_room = null
-	lobby_view.render(lobby)
-	room_view.visible = false
-	lobby_view.visible = true

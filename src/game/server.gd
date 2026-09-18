@@ -37,6 +37,14 @@ func request_create_room() -> void:
 func request_enter_room(room_id: String) -> void:
 	enter_room(room_id, multiplayer.get_remote_sender_id())
 
+@rpc("any_peer", "call_remote", "reliable")
+func request_leave_room(room_id: String) -> void:
+	leave_room(room_id, multiplayer.get_remote_sender_id())
+
+@rpc("authority", "call_remote", "reliable")
+func lobby_changed(lobby: Lobby) -> void:
+	pass
+
 func create_room() -> Room:
 	return lobby.create_room()
 

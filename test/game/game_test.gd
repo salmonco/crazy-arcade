@@ -21,9 +21,12 @@ func _request_create_room_and_enter_room() -> void:
 	_request_enter_room(room.id)
 
 func _request_enter_room(room_id: String) -> void:
-	var room := _game.lobby.find_room(room_id)
 	_game.lobby.enter_room(room_id, _game.peer_id)
-	_game.room_changed(room)
+	_game.lobby_changed(_game.lobby)
+
+func _request_leave_room(room_id: String) -> void:
+	_game.lobby.leave_room(room_id, _game.peer_id)
+	_game.lobby_changed(_game.lobby)
 
 # 로비에서 방 입장
 func test_방_ID로_입장하면_방_화면이_된다() -> void:
@@ -44,7 +47,7 @@ func test_방을_만들면_만든_방에_들어가_있다() -> void:
 
 func test_방에서_나가면_로비_화면이_된다() -> void:
 	_request_create_room_and_enter_room()
-	_game.leave_room()
+	_request_leave_room(_game.current_room.id)
 	assert_that(_game.current_room).is_null()
 	assert_bool(_game.lobby_view.visible).is_true()
 	assert_bool(_game.room_view.visible).is_false()
@@ -52,7 +55,7 @@ func test_방에서_나가면_로비_화면이_된다() -> void:
 func test_방에서_나가도_방은_로비에_남는다() -> void:
 	_request_create_room_and_enter_room()
 	var left_room := _game.current_room
-	_game.leave_room()
+	_request_leave_room(_game.current_room.id)
 	_request_enter_room(left_room.id)
 	assert_that(_game.current_room).is_equal(left_room)
 
@@ -100,7 +103,7 @@ func test_방에_있는_채로_다른_방에_들어가면_이전_방에서_빠�
 func test_방을_나갔다_다시_들어가도_내_캐릭터는_하나다() -> void:
 	_request_create_room_and_enter_room()
 	var room := _game.current_room
-	_game.leave_room()
+	_request_leave_room(_game.current_room.id)
 	_request_enter_room(room.id)
 	assert_int(_game.room_view.slot_count()).is_equal(1)
 
@@ -153,7 +156,7 @@ func test_방에서_나가면_2P도_방에서_빠진다() -> void:
 	_request_create_room_and_enter_room()
 	var room := _game.current_room
 	_game.set_local_multi(true)
-	_game.leave_room()
+	_request_leave_room(_game.current_room.id)
 	assert_array(room.characters()).is_empty()
 
 func test_다른_방에_들어가면_로컬_멀티_체크가_그_방을_따른다() -> void:
@@ -319,7 +322,7 @@ func test_다른_방에_들어가면_이전_방의_슬롯이_남지_않는다() 
 
 func _create_room_and_leave() -> void:
 	_request_create_room_and_enter_room()
-	_game.leave_room()
+	_request_leave_room(_game.current_room.id)
 
 func _room_with_characters(count: int) -> Room:
 	var room := _game.lobby.create_room()
@@ -468,7 +471,7 @@ func test_피어가_방에서_떠나면_방에_해당_피어의_캐릭터가_빠
 	_request_enter_room(room.id)
 	assert_that(room.find_character(_game.peer_id)).is_not_null()
 	assert_that(room.find_character(peer2_id)).is_null()
-	_game.leave_room()
+	_request_leave_room(_game.current_room.id)
 	assert_that(room.find_character(_game.peer_id)).is_null()
 	assert_that(room.find_character(peer2_id)).is_null()
 
