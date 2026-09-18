@@ -54,8 +54,24 @@ func on_peer_disconnected(id: int) -> void:
 func request_create_room() -> void:
 	pass
 
+@rpc("any_peer", "call_remote", "reliable")
+func request_enter_room(room_id: String) -> void:
+	pass
+
+@rpc("authority", "call_remote", "reliable")
+func room_changed(room: Room) -> void:
+	if room == null:
+		return
+	current_room = room
+	room_view.render(room)
+	lobby_view.visible = false
+	room_view.visible = true
+
 func create_room() -> void:
 	request_create_room.rpc_id(1)
+
+func enter_room(room_id: String) -> void:
+	request_enter_room.rpc_id(1, room_id)
 
 func start_game() -> void:
 	current_room.game_start()
@@ -106,15 +122,3 @@ func leave_room() -> void:
 	lobby_view.render(lobby)
 	room_view.visible = false
 	lobby_view.visible = true
-
-func enter_room(room_id: String) -> void:
-	var room := lobby.find_room(room_id)
-	if room == null:
-		return
-	if current_room != null:
-		leave_room()
-	lobby.enter_room(room_id, peer_id)
-	current_room = room
-	room_view.render(room)
-	lobby_view.visible = false
-	room_view.visible = true

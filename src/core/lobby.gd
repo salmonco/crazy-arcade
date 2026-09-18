@@ -35,9 +35,13 @@ func find_character(peer_id: int) -> Character:
 
 func enter_room(room_id: String, peer_id: int) -> bool:
 	var room := find_room(room_id)
+	if room == null:
+		return false
 	var character := find_character(peer_id)
 	if character == null:
 		return false
+	if character.joined_room_id != "":
+		leave_room(character.joined_room_id, peer_id)
 	room.add_character(character)
 	return true
 

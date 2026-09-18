@@ -33,6 +33,10 @@ func on_peer_disconnected(id: int) -> void:
 func request_create_room() -> void:
 	create_room()
 
+@rpc("any_peer", "call_remote", "reliable")
+func request_enter_room(room_id: String) -> void:
+	enter_room(room_id, multiplayer.get_remote_sender_id())
+
 func create_room() -> Room:
 	return lobby.create_room()
 
