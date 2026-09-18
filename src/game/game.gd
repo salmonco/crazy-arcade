@@ -50,8 +50,12 @@ func on_peer_disconnected(id: int) -> void:
 	var character := lobby.find_character(id)
 	lobby.remove_character(character)
 
+@rpc("any_peer", "call_remote", "reliable")
+func request_create_room() -> void:
+	pass
+
 func create_room() -> void:
-	enter_room(lobby.create_room().id)
+	request_create_room.rpc_id(1)
 
 func start_game() -> void:
 	current_room.game_start()
