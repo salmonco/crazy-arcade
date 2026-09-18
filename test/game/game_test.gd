@@ -5,6 +5,7 @@ const SCENE_PATH := "res://scenes/game.tscn"
 var _runner: GdUnitSceneRunner
 var _game: Game
 var _lobby: Lobby
+var _player_character: Character
 
 func before_test() -> void:
 	_runner = scene_runner(SCENE_PATH)
@@ -16,7 +17,7 @@ func _on_connected_peer(id: int) -> void:
 	var character := Character.new(Vector2i.ZERO, 0, Color.RED, id)
 	_lobby.add_character(character)
 	_game.peer_id = id
-	_game.player_character = character
+	_player_character = character
 
 func _on_connected_other_peer(id: int) -> void:
 	var character := Character.new(Vector2i.ZERO, 0, Color.RED, id)
@@ -95,7 +96,7 @@ func test_방에_들어가면_캐릭터_수만큼_슬롯이_생긴다() -> void:
 
 func test_방에_입장하면_내_캐릭터가_슬롯에_보인다() -> void:
 	_request_create_room_and_enter_room()
-	assert_array(_game.current_room.characters()).is_equal([_game.player_character])
+	assert_array(_game.current_room.characters()).is_equal([_player_character])
 	assert_int(_game.room_view.slot_count()).is_equal(1)
 
 func test_방에_있는_채로_다른_방에_들어가면_이전_방에서_빠진다() -> void:
@@ -104,7 +105,7 @@ func test_방에_있는_채로_다른_방에_들어가면_이전_방에서_빠�
 	_request_enter_room(first_room.id)
 	_request_enter_room(second_room.id)
 	assert_array(first_room.characters()).is_empty()
-	assert_array(second_room.characters()).is_equal([_game.player_character])
+	assert_array(second_room.characters()).is_equal([_player_character])
 
 func test_방을_나갔다_다시_들어가도_내_캐릭터는_하나다() -> void:
 	_request_create_room_and_enter_room()
@@ -123,7 +124,7 @@ func test_몬스터_모드를_켜면_NPC_슬롯이_NPC로_그려진다() -> void
 func test_로컬_멀티면_1P와_2P_슬롯이_다른_색으로_그려진다() -> void:
 	_request_create_room_and_enter_room()
 	_game.set_local_multi(true)
-	assert_that(_slot_color(0)).is_equal(_game.player_character.color)
+	assert_that(_slot_color(0)).is_equal(_player_character.color)
 	assert_that(_slot_color(1)).is_equal(_game.second_player_character.color)
 	assert_that(_slot_color(0)).is_not_equal(_slot_color(1))
 
@@ -149,7 +150,7 @@ func test_로컬_멀티를_끄면_2P가_방에서_빠진다() -> void:
 	_request_create_room_and_enter_room()
 	_game.set_local_multi(true)
 	_game.set_local_multi(false)
-	assert_array(_game.current_room.characters()).is_equal([_game.player_character])
+	assert_array(_game.current_room.characters()).is_equal([_player_character])
 	assert_int(_game.room_view.slot_count()).is_equal(1)
 
 func test_로컬_멀티를_두_번_켜도_2P는_하나다() -> void:
@@ -180,7 +181,7 @@ func test_몬스터_모드를_켜면_2P가_나와_같은_팀이_된다() -> void
 	_game.set_local_multi(true)
 	assert_int(_game.current_room.team_count()).is_equal(2)
 	_game.set_monster_mode(true)
-	assert_that(_game.second_player_character.color).is_equal(_game.player_character.color)
+	assert_that(_game.second_player_character.color).is_equal(_player_character.color)
 	assert_int(_game.current_room.team_count()).is_equal(2)
 
 func test_몬스터_모드를_끄면_2P가_다시_다른_팀이_된다() -> void:
@@ -188,14 +189,14 @@ func test_몬스터_모드를_끄면_2P가_다시_다른_팀이_된다() -> void
 	_game.set_local_multi(true)
 	_game.set_monster_mode(true)
 	_game.set_monster_mode(false)
-	assert_that(_game.second_player_character.color).is_not_equal(_game.player_character.color)
+	assert_that(_game.second_player_character.color).is_not_equal(_player_character.color)
 	assert_int(_game.current_room.team_count()).is_equal(2)
 
 func test_몬스터_모드에서_켠_로컬_멀티의_2P도_나와_같은_팀이다() -> void:
 	_request_create_room_and_enter_room()
 	_game.set_monster_mode(true)
 	_game.set_local_multi(true)
-	assert_that(_game.second_player_character.color).is_equal(_game.player_character.color)
+	assert_that(_game.second_player_character.color).is_equal(_player_character.color)
 	assert_int(_game.current_room.team_count()).is_equal(2)
 
 func test_방에서_몬스터_모드를_켜면_NPC가_슬롯에_늘어난다() -> void:
@@ -242,23 +243,23 @@ func test_방에서_시작한_몬스터_배틀에서_스페이스로_내_캐릭�
 	_game.battle_view.handle_key_pressed(KEY_SPACE)
 	var views := _game.battle_view.water_balloon_views.get_children()
 	assert_int(views.size()).is_equal(1)
-	assert_vector((views[0] as Sprite2D).position).is_equal(_game.player_character.pixel_position())
+	assert_vector((views[0] as Sprite2D).position).is_equal(_player_character.pixel_position())
 
 func test_방에서_시작한_몬스터_배틀에서_방향키로_내_캐릭터가_움직인다() -> void:
 	_start_monster_battle()
-	var start_cell := _game.player_character.position()
+	var start_cell := _player_character.position()
 	_game.battle_view.handle_key_pressed(KEY_RIGHT)
 	_game.battle_view.tick(0.25)
-	assert_vector(_game.player_character.position()).is_equal(start_cell + Vector2i.RIGHT)
+	assert_vector(_player_character.position()).is_equal(start_cell + Vector2i.RIGHT)
 
 func test_몬스터_모드에_2P가_있으면_1P는_RFDG_2P는_방향키로_움직인다() -> void:
 	_start_monster_battle_with_second_player()
-	var my_start := _game.player_character.position()
+	var my_start := _player_character.position()
 	var second_start := _game.second_player_character.position()
 	_game.battle_view.handle_key_pressed(KEY_G)
 	_game.battle_view.handle_key_pressed(KEY_DOWN)
 	_game.battle_view.tick(0.25)
-	assert_vector(_game.player_character.position()).is_equal(my_start + Vector2i.RIGHT)
+	assert_vector(_player_character.position()).is_equal(my_start + Vector2i.RIGHT)
 	assert_vector(_game.second_player_character.position()).is_equal(second_start + Vector2i.DOWN)
 
 func test_몬스터_모드에_2P가_있으면_좌우_시프트로_각자_물풍선을_놓는다() -> void:
@@ -266,7 +267,7 @@ func test_몬스터_모드에_2P가_있으면_좌우_시프트로_각자_물풍�
 	_game.battle_view.handle_key_pressed(KEY_SHIFT, KEY_LOCATION_LEFT)
 	_game.battle_view.handle_key_pressed(KEY_SHIFT, KEY_LOCATION_RIGHT)
 	var cells := _game.battle_view.battle.get_map().water_balloon_positions()
-	assert_array(cells).contains([_game.player_character.position(), _game.second_player_character.position()])
+	assert_array(cells).contains([_player_character.position(), _game.second_player_character.position()])
 
 # 승패
 func test_로비_화면에서는_승패_라벨이_보이지_않는다() -> void:
@@ -283,7 +284,7 @@ func test_방에서_시작한_몬스터_배틀에서_NPC를_이기면_WIN이_뜬
 
 func test_방에서_시작한_몬스터_배틀에서_지면_LOSE가_뜬다() -> void:
 	_start_monster_battle()
-	_game.battle_view.battle.get_map().let_character_out(_game.player_character)
+	_game.battle_view.battle.get_map().let_character_out(_player_character)
 	_game.battle_view.tick(0.1)
 	assert_bool(_game.battle_view.lose_label.visible).is_true()
 	assert_bool(_game.battle_view.win_label.visible).is_false()
@@ -339,7 +340,7 @@ func _room_with_characters(count: int) -> Room:
 # 물풍선 비주얼
 func test_NPC가_놓은_물풍선은_플레이어의_것과_다른_텍스처로_보인다() -> void:
 	_start_monster_battle()
-	var player_cell := _game.player_character.position()
+	var player_cell := _player_character.position()
 	var npc: Npc
 	for character in _game.current_room.characters():
 		if character is Npc:
@@ -356,7 +357,7 @@ func test_NPC가_놓은_물풍선은_플레이어의_것과_다른_텍스처로_
 
 func test_캐릭터의_물풍선은_서로_다른_텍스처로_보인다() -> void:
 	_start_monster_battle_with_second_player()
-	var player_cell := _game.player_character.position()
+	var player_cell := _player_character.position()
 	var second_player_cell := _game.second_player_character.position()
 	var npc: Npc
 	for character in _game.current_room.characters():
@@ -379,7 +380,7 @@ func test_배틀이_종료되면_몇_초_후에_다시_방으로_이동한다() 
 	_start_monster_battle()
 	assert_bool(_game.battle_view.visible).is_true()
 	assert_bool(_game.room_view.visible).is_false()
-	_game.battle_view.battle.get_map().let_character_out(_game.player_character)
+	_game.battle_view.battle.get_map().let_character_out(_player_character)
 	_game.battle_view.tick(Battle.GAME_OVER_AFTER_SECOND * 0.1)
 	assert_bool(_game.battle_view.visible).is_true()
 	assert_bool(_game.room_view.visible).is_false()
@@ -389,34 +390,34 @@ func test_배틀이_종료되면_몇_초_후에_다시_방으로_이동한다() 
 
 func test_배틀이_종료되고_다시_배틀을_시작하면_캐릭터의_스피드가_초기화된다() -> void:
 	_start_monster_battle()
-	_game.player_character.speed = 10.0
-	_game.battle_view.battle.get_map().let_character_out(_game.player_character)
+	_player_character.speed = 10.0
+	_game.battle_view.battle.get_map().let_character_out(_player_character)
 	_game.battle_view.tick(Battle.GAME_OVER_AFTER_SECOND * 0.1)
-	assert_float(_game.player_character.speed).is_equal(10.0)
+	assert_float(_player_character.speed).is_equal(10.0)
 	_game.battle_view.tick(Battle.GAME_OVER_AFTER_SECOND)
-	assert_float(_game.player_character.speed).is_equal(Character.SPEED)
+	assert_float(_player_character.speed).is_equal(Character.SPEED)
 
 func test_배틀이_종료되고_다시_배틀을_시작하면_캐릭터의_물풍선_개수가_초기화된다() -> void:
 	_start_monster_battle()
-	_game.player_character.max_water_balloon_count = 5
-	_game.battle_view.battle.get_map().let_character_out(_game.player_character)
+	_player_character.max_water_balloon_count = 5
+	_game.battle_view.battle.get_map().let_character_out(_player_character)
 	_game.battle_view.tick(Battle.GAME_OVER_AFTER_SECOND * 0.1)
-	assert_int(_game.player_character.max_water_balloon_count).is_equal(5)
+	assert_int(_player_character.max_water_balloon_count).is_equal(5)
 	_game.battle_view.tick(Battle.GAME_OVER_AFTER_SECOND)
-	assert_int(_game.player_character.max_water_balloon_count).is_equal(Character.WATER_BALLOON_COUNT)
+	assert_int(_player_character.max_water_balloon_count).is_equal(Character.WATER_BALLOON_COUNT)
 
 func test_배틀이_종료되고_다시_배틀을_시작하면_캐릭터의_물줄기_길이가_초기화된다() -> void:
 	_start_monster_battle()
-	_game.player_character.max_water_stream_length = 5
-	_game.battle_view.battle.get_map().let_character_out(_game.player_character)
+	_player_character.max_water_stream_length = 5
+	_game.battle_view.battle.get_map().let_character_out(_player_character)
 	_game.battle_view.tick(Battle.GAME_OVER_AFTER_SECOND * 0.1)
-	assert_int(_game.player_character.max_water_stream_length).is_equal(5)
+	assert_int(_player_character.max_water_stream_length).is_equal(5)
 	_game.battle_view.tick(Battle.GAME_OVER_AFTER_SECOND)
-	assert_int(_game.player_character.max_water_stream_length).is_equal(Character.WATER_STREAM_LENGTH)
+	assert_int(_player_character.max_water_stream_length).is_equal(Character.WATER_STREAM_LENGTH)
 
 func test_배틀이_종료되고_다시_배틀을_시작하면_캐릭터의_물방울에_갇힌_상태가_초기화된다() -> void:
 	_start_monster_battle()
-	_game.battle_view.battle.get_map().let_character_out(_game.player_character)
+	_game.battle_view.battle.get_map().let_character_out(_player_character)
 	var npc := _npc_in_battle()
 	npc.trapped()
 	_game.battle_view.tick(Battle.GAME_OVER_AFTER_SECOND * 0.1)
@@ -426,20 +427,20 @@ func test_배틀이_종료되고_다시_배틀을_시작하면_캐릭터의_물�
 
 func test_배틀이_종료되고_다시_배틀을_시작하면_캐릭터의_얼굴_방향이_초기화된다() -> void:
 	_start_monster_battle()
-	_game.player_character.facing = Vector2i.LEFT
-	_game.battle_view.battle.get_map().let_character_out(_game.player_character)
+	_player_character.facing = Vector2i.LEFT
+	_game.battle_view.battle.get_map().let_character_out(_player_character)
 	_game.battle_view.tick(Battle.GAME_OVER_AFTER_SECOND * 0.1)
-	assert_vector(_game.player_character.facing).is_equal(Vector2i.LEFT)
+	assert_vector(_player_character.facing).is_equal(Vector2i.LEFT)
 	_game.battle_view.tick(Battle.GAME_OVER_AFTER_SECOND)
-	assert_vector(_game.player_character.facing).is_equal(Character.FACING_DIRECTION)
+	assert_vector(_player_character.facing).is_equal(Character.FACING_DIRECTION)
 
 func test_배틀이_종료되고_다시_배틀을_시작하면_캐릭터의_아웃된_상태가_초기화된다() -> void:
 	_start_monster_battle()
-	_game.battle_view.battle.get_map().let_character_out(_game.player_character)
+	_game.battle_view.battle.get_map().let_character_out(_player_character)
 	_game.battle_view.tick(Battle.GAME_OVER_AFTER_SECOND * 0.1)
-	assert_bool(_game.player_character.is_out).is_true()
+	assert_bool(_player_character.is_out).is_true()
 	_game.battle_view.tick(Battle.GAME_OVER_AFTER_SECOND)
-	assert_bool(_game.player_character.is_out).is_false()
+	assert_bool(_player_character.is_out).is_false()
 
 # 멀티플레이어
 func test_다른_피어_말고_내가_방에_입장해야_방_화면이_보인다() -> void:

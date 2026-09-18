@@ -7,9 +7,7 @@ extends Node
 
 const URL := "ws://localhost:%d" % Server.PORT
 
-var lobby := Lobby.new()
 var current_room: Room
-var player_character: Character
 var second_player_character: Character
 var peer_id: int
 
@@ -34,9 +32,6 @@ func _create_peer() -> void:
 
 func on_connected_to_server() -> void:
 	peer_id = multiplayer.get_unique_id()
-	var character := Character.new(Vector2i.ZERO, 0, Color.RED, peer_id)
-	lobby.add_character(character)
-	player_character = character
 
 @rpc("any_peer", "call_remote", "reliable")
 func request_create_room() -> void:
@@ -113,5 +108,5 @@ func set_monster_mode(enabled: bool) -> void:
 
 func _second_player_color() -> Color:
 	if current_room.battle_mode == BattleMode.MONSTER:
-		return player_character.color
+		return Team.PLAYER_COLOR
 	return Team.SECOND_PLAYER_COLOR
