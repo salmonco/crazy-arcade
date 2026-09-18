@@ -95,8 +95,7 @@ func set_local_multi(room_id: String, enabled: bool, peer_id: int) -> void:
 	if enabled:
 		if second_player != null:
 			return
-		var new_2p_color = Team.PLAYER_COLOR if room.battle_mode == BattleMode.MONSTER else Team.SECOND_PLAYER_COLOR
-		var new_2p = Character.new(Vector2i.ZERO, 2, new_2p_color, peer_id, true)
+		var new_2p = Character.new(Vector2i.ZERO, 2, _second_player_color(room.battle_mode), peer_id, true)
 		room.add_character(new_2p)
 	else:
 		if second_player == null:
@@ -108,4 +107,7 @@ func set_monster_mode(room_id: String, enabled: bool, peer_id: int) -> void:
 	var second_player := room.find_2p(peer_id)
 	room.set_battle_mode(BattleMode.MONSTER if enabled else BattleMode.LOCAL_MULTI)
 	if second_player != null:
-		second_player.color = Team.PLAYER_COLOR if room.battle_mode == BattleMode.MONSTER else Team.SECOND_PLAYER_COLOR
+		second_player.color = _second_player_color(room.battle_mode)
+
+func _second_player_color(battle_mode: StringName) -> Color:
+	return Team.PLAYER_COLOR if battle_mode == BattleMode.MONSTER else Team.SECOND_PLAYER_COLOR

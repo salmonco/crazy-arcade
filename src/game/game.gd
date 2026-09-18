@@ -7,8 +7,8 @@ extends Node
 
 const URL := "ws://localhost:%d" % Server.PORT
 
-var current_room: Room
 var peer_id: int
+var current_room: Room
 
 func _ready() -> void:
 	_create_peer()
