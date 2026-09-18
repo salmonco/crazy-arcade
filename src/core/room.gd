@@ -1,7 +1,7 @@
 class_name Room
 extends RefCounted
 
-const MINIMUM_TEAM_COUNT_TO_START_GAME := 2
+const MINIMUM_TEAM_COUNT_TO_START_BATTLE := 2
 
 var _characters: Array[Character] = []
 var _battle: Battle = null
@@ -79,7 +79,7 @@ func team_count() -> int:
 	return Team.colors(_characters).size()
 
 func can_game_start() -> bool:
-	return team_count() >= MINIMUM_TEAM_COUNT_TO_START_GAME
+	return team_count() >= MINIMUM_TEAM_COUNT_TO_START_BATTLE
 
 func has_npc() -> bool:
 	for character in _characters:

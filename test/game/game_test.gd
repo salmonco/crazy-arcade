@@ -312,7 +312,7 @@ func _start_monster_battle() -> void:
 	_request_start_battle(_game.current_room.id)
 
 func test_방의_시작_버튼이_게임_시작에_연결되어_있다() -> void:
-	assert_bool(_game.room_view.start_button.pressed.is_connected(_game.start_game)).is_true()
+	assert_bool(_game.room_view.start_button.pressed.is_connected(_game.start_battle)).is_true()
 
 func test_한_팀뿐이면_시작_버튼이_비활성이다() -> void:
 	var room := _room_with_characters(2)

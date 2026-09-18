@@ -17,7 +17,7 @@ func _ready() -> void:
 	room_view.leave_button.pressed.connect(leave_room)
 	lobby_view.room_chosen.connect(enter_room)
 	room_view.monster_mode_check.toggled.connect(set_monster_mode)
-	room_view.start_button.pressed.connect(start_game)
+	room_view.start_button.pressed.connect(start_battle)
 	room_view.local_multi_check.toggled.connect(set_local_multi)
 	battle_view.game_over.connect(finish_game)
 	multiplayer.connected_to_server.connect(on_connected_to_server)
@@ -78,7 +78,7 @@ func enter_room(room_id: String) -> void:
 func leave_room(room_id: String) -> void:
 	request_leave_room.rpc_id(1, room_id)
 
-func start_game() -> void:
+func start_battle() -> void:
 	request_start_battle.rpc_id(1, current_room.id)
 
 func finish_game() -> void:
