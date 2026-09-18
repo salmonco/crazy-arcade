@@ -59,7 +59,7 @@ func test_피어가_방에_입장하면_방에_피어의_캐릭터가_생긴다(
 	assert_int(room.characters().size()).is_equal(1)
 	assert_that(room.find_character(peer_id)).is_equal(_server.lobby.find_character(peer_id))
 
-func test_피어를_방에서_떠나면_방에_피어의_캐릭터가_사라진다() -> void:
+func test_피어가_방에서_떠나면_방에_피어의_캐릭터가_사라진다() -> void:
 	var peer_id := 12345
 	_server.on_peer_connected(peer_id)
 	var room := _server.create_room()
