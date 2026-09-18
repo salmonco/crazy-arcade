@@ -12,6 +12,7 @@ func before_test() -> void:
 	_game = _runner.scene()
 	_lobby = Lobby.new()
 	_on_connected_peer(47324)
+	_game.battle_view.game_over.connect(func() -> void: _request_finish_battle(_game.current_room.id))
 
 func _on_connected_peer(id: int) -> void:
 	var character := Character.new(Vector2i.ZERO, 0, Color.RED, id)
@@ -38,6 +39,11 @@ func _request_leave_room(room_id: String) -> void:
 func _request_start_battle(room_id: String) -> void:
 	var room := _lobby.find_room(room_id)
 	room.game_start()
+	_game.lobby_changed(_lobby)
+
+func _request_finish_battle(room_id: String) -> void:
+	var room := _lobby.find_room(room_id)
+	room.game_over()
 	_game.lobby_changed(_lobby)
 
 # 로비에서 방 입장

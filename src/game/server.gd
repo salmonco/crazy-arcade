@@ -53,6 +53,11 @@ func request_start_battle(room_id: String) -> void:
 	start_battle(room_id)
 	# TODO: lobby_changed.rpc()
 
+@rpc("any_peer", "call_remote", "reliable")
+func request_finish_battle(room_id: String) -> void:
+	finish_battle(room_id)
+	# TODO: lobby_changed.rpc()
+
 @rpc("authority", "call_remote", "reliable")
 func lobby_changed(lobby: Lobby) -> void:
 	pass
@@ -69,3 +74,7 @@ func leave_room(room_id: String, peer_id: int) -> void:
 func start_battle(room_id: String) -> void:
 	var room := lobby.find_room(room_id)
 	room.game_start()
+
+func finish_battle(room_id: String) -> void:
+	var room := lobby.find_room(room_id)
+	room.game_over()

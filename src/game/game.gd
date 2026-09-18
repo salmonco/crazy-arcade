@@ -49,25 +49,33 @@ func request_leave_room(room_id: String) -> void:
 func request_start_battle(room_id: String) -> void:
 	pass
 
+@rpc("any_peer", "call_remote", "reliable")
+func request_finish_battle(room_id: String) -> void:
+	pass
+
 @rpc("authority", "call_remote", "reliable")
 func lobby_changed(_lobby: Lobby) -> void:
 	lobby_view.render(_lobby)
 	var character := _lobby.find_character(peer_id)
-	if character.joined_room_id == "":
+	if character == null:
+		return
+	var room := _lobby.find_room(character.joined_room_id)
+	if room == null:
 		_remove_second_player()
 		current_room = null
 		room_view.visible = false
 		lobby_view.visible = true
+		return
+	current_room = room
+	room_view.render(room)
+	lobby_view.visible = false
+	if room.get_battle() != null and not room.get_battle().is_finished:
+		battle_view.show_battle(current_room.get_battle())
+		room_view.visible = false
+		battle_view.visible = true
 	else:
-		var room := _lobby.find_room(character.joined_room_id)
-		current_room = room
-		room_view.render(room)
-		lobby_view.visible = false
 		room_view.visible = true
-		if room.get_battle() != null and not room.get_battle().is_finished:
-			battle_view.show_battle(current_room.get_battle())
-			room_view.visible = false
-			battle_view.visible = true
+		battle_view.visible = false
 
 func create_room() -> void:
 	request_create_room.rpc_id(1)
@@ -82,9 +90,7 @@ func start_battle() -> void:
 	request_start_battle.rpc_id(1, current_room.id)
 
 func finish_game() -> void:
-	current_room.game_over()
-	room_view.visible = true
-	battle_view.visible = false
+	request_finish_battle.rpc_id(1, current_room.id)
 
 func set_local_multi(enabled: bool) -> void:
 	if enabled:

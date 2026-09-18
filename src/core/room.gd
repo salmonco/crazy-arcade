@@ -56,6 +56,7 @@ func game_start() -> void:
 func game_over() -> void:
 	for character in _characters:
 		character.init_player()
+	_battle = null
 
 func get_battle() -> Battle:
 	return _battle
