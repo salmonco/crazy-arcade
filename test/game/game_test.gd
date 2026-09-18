@@ -4,72 +4,53 @@ const SCENE_PATH := "res://scenes/game.tscn"
 
 var _runner: GdUnitSceneRunner
 var _game: Game
-var _lobby: Lobby
+var _server: Server
 var _player_character: Character
 
 func before_test() -> void:
 	_runner = scene_runner(SCENE_PATH)
 	_game = _runner.scene()
-	_lobby = Lobby.new()
+	_server = Server.new()
 	_on_connected_peer(47324)
 	_game.battle_view.game_over.connect(func() -> void: _request_finish_battle(_game.current_room.id))
 	_game.room_view.local_multi_check.toggled.connect(func(toggled_on: bool) -> void: _request_set_local_multi(_game.current_room.id, toggled_on))
 	_game.room_view.monster_mode_check.toggled.connect(func(toggled_on: bool) -> void: _request_set_monster_mode(_game.current_room.id, toggled_on))
 
-func _on_connected_peer(id: int) -> void:
-	var character := Character.new(Vector2i.ZERO, 0, Color.RED, id)
-	_lobby.add_character(character)
-	_game.peer_id = id
-	_player_character = character
+func after_test() -> void:
+	_server.free()
 
-func _on_connected_other_peer(id: int) -> void:
-	var character := Character.new(Vector2i.ZERO, 0, Color.RED, id)
-	_lobby.add_character(character)
+func _on_connected_peer(id: int) -> void:
+	_server.on_peer_connected(id)
+	_game.peer_id = id
+	_player_character = _server.lobby.find_character(id)
 
 func _request_create_room_and_enter_room() -> void:
-	var room := _lobby.create_room()
+	var room := _server.create_room()
 	_request_enter_room(room.id)
 
 func _request_enter_room(room_id: String) -> void:
-	_lobby.enter_room(room_id, _game.peer_id)
-	_game.lobby_changed(_lobby)
+	_server.enter_room(room_id, _game.peer_id)
+	_game.lobby_changed(_server.lobby)
 
 func _request_leave_room(room_id: String) -> void:
-	_lobby.leave_room(room_id, _game.peer_id)
-	_game.lobby_changed(_lobby)
+	_server.leave_room(room_id, _game.peer_id)
+	_game.lobby_changed(_server.lobby)
 
 func _request_start_battle(room_id: String) -> void:
-	var room := _lobby.find_room(room_id)
-	room.game_start()
-	_game.lobby_changed(_lobby)
+	_server.start_battle(room_id)
+	_game.lobby_changed(_server.lobby)
 
 func _request_finish_battle(room_id: String) -> void:
-	var room := _lobby.find_room(room_id)
-	room.game_over()
-	_game.lobby_changed(_lobby)
+	_server.finish_battle(room_id)
+	_game.lobby_changed(_server.lobby)
 
 func _request_set_local_multi(room_id: String, enabled: bool) -> void:
-	var room := _lobby.find_room(room_id)
-	var second_player := room.find_2p(_game.peer_id)
-	if enabled:
-		if second_player != null:
-			return
-		var new_2p_color = Team.PLAYER_COLOR if room.battle_mode == BattleMode.MONSTER else Team.SECOND_PLAYER_COLOR
-		var new_2p = Character.new(Vector2i.ZERO, 2, new_2p_color, _game.peer_id, true)
-		room.add_character(new_2p)
-	else:
-		if second_player == null:
-			return
-		room.remove_character(second_player)
-	_game.lobby_changed(_lobby)
+	_server.set_local_multi(room_id, enabled, _game.peer_id)
+	_game.lobby_changed(_server.lobby)
 
 func _request_set_monster_mode(room_id: String, enabled: bool) -> void:
-	var room := _lobby.find_room(room_id)
-	var second_player := room.find_2p(_game.peer_id)
-	room.set_battle_mode(BattleMode.MONSTER if enabled else BattleMode.LOCAL_MULTI)
-	if second_player != null:
-		second_player.color = Team.PLAYER_COLOR if room.battle_mode == BattleMode.MONSTER else Team.SECOND_PLAYER_COLOR
-	_game.lobby_changed(_lobby)
+	_server.set_monster_mode(room_id, enabled, _game.peer_id)
+	_game.lobby_changed(_server.lobby)
 
 # 로비에서 방 입장
 func test_방_ID로_입장하면_방_화면이_된다() -> void:
@@ -84,7 +65,7 @@ func test_없는_방_ID로는_입장하지_못한다() -> void:
 
 func test_방을_만들면_만든_방에_들어가_있다() -> void:
 	_request_create_room_and_enter_room()
-	assert_that(_game.current_room).is_equal(_lobby.rooms[0])
+	assert_that(_game.current_room).is_equal(_server.lobby.rooms[0])
 	assert_bool(_game.room_view.visible).is_true()
 	assert_bool(_game.lobby_view.visible).is_false()
 
@@ -111,7 +92,7 @@ func test_로비에_방_수만큼_목록이_보인다() -> void:
 func test_로비_목록에서_방을_고르면_그_방에_입장한다() -> void:
 	_create_room_and_leave()
 	_create_room_and_leave()
-	var second_room := _lobby.rooms[1]
+	var second_room := _server.lobby.rooms[1]
 	_request_enter_room(second_room.id)
 	assert_that(_game.current_room).is_equal(second_room)
 	assert_bool(_game.room_view.visible).is_true()
@@ -161,7 +142,7 @@ func test_로컬_멀티면_1P와_2P_슬롯이_다른_색으로_그려진다() ->
 	_request_create_room_and_enter_room()
 	_request_set_local_multi(_game.current_room.id, true)
 	assert_that(_slot_color(0)).is_equal(_player_character.color)
-	assert_that(_slot_color(1)).is_equal(_lobby.find_room(_game.current_room.id).find_2p(_game.peer_id).color)
+	assert_that(_slot_color(1)).is_equal(_game.current_room.find_2p(_game.peer_id).color)
 	assert_that(_slot_color(0)).is_not_equal(_slot_color(1))
 
 func test_몬스터_모드면_사람_슬롯은_같은_색이고_NPC만_다른_색이다() -> void:
@@ -367,7 +348,7 @@ func _create_room_and_leave() -> void:
 	_request_leave_room(_game.current_room.id)
 
 func _room_with_characters(count: int) -> Room:
-	var room := _lobby.create_room()
+	var room := _server.create_room()
 	for i in count:
 		room.add_character(Character.new(Vector2i(i + 1, i + 3), i + 1, Color.RED))
 	return room
@@ -481,19 +462,19 @@ func test_배틀이_종료되고_다시_배틀을_시작하면_캐릭터의_아�
 # 멀티플레이어
 func test_다른_피어_말고_내가_방에_입장해야_방_화면이_보인다() -> void:
 	var peer2_id := 32412
-	_on_connected_other_peer(peer2_id)
-	var room := _lobby.create_room()
-	_lobby.enter_room(room.id, peer2_id)
+	_server.on_peer_connected(peer2_id)
+	var room := _server.create_room()
+	_server.enter_room(room.id, peer2_id)
 	assert_bool(_game.room_view.visible).is_false()
 	_request_enter_room(room.id)
 	assert_bool(_game.room_view.visible).is_true()
 
 func test_나_말고_다른_피어가_방에서_떠나도_방_화면은_유지된다() -> void:
 	var peer2_id := 32412
-	_on_connected_other_peer(peer2_id)
-	var room := _lobby.create_room()
+	_server.on_peer_connected(peer2_id)
+	var room := _server.create_room()
 	_request_enter_room(room.id)
-	_lobby.enter_room(room.id, peer2_id)
+	_server.enter_room(room.id, peer2_id)
 	assert_bool(_game.room_view.visible).is_true()
-	_lobby.leave_room(room.id, peer2_id)
+	_server.leave_room(room.id, peer2_id)
 	assert_bool(_game.room_view.visible).is_true()
