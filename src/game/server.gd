@@ -28,3 +28,12 @@ func on_peer_disconnected(id: int) -> void:
 	print("피어 접속 끊김: %d" % id)
 	var character := lobby.find_character(id)
 	lobby.remove_character(character)
+
+func create_room() -> Room:
+	return lobby.create_room()
+
+func enter_room(room_id: String, peer_id: int) -> void:
+	lobby.enter_room(room_id, peer_id)
+
+func leave_room(room_id: String, peer_id: int) -> void:
+	lobby.leave_room(room_id, peer_id)
