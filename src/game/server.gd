@@ -58,6 +58,16 @@ func request_finish_battle(room_id: String) -> void:
 	finish_battle(room_id)
 	# TODO: lobby_changed.rpc()
 
+@rpc("any_peer", "call_remote", "reliable")
+func request_set_local_multi(room_id: String, enabled: bool) -> void:
+	set_local_multi(room_id, enabled, multiplayer.get_remote_sender_id())
+	# TODO: lobby_changed.rpc()
+
+@rpc("any_peer", "call_remote", "reliable")
+func request_set_monster_mode(room_id: String, enabled: bool) -> void:
+	set_monster_mode(room_id, enabled, multiplayer.get_remote_sender_id())
+	# TODO: lobby_changed.rpc()
+
 @rpc("authority", "call_remote", "reliable")
 func lobby_changed(lobby: Lobby) -> void:
 	pass
@@ -78,3 +88,24 @@ func start_battle(room_id: String) -> void:
 func finish_battle(room_id: String) -> void:
 	var room := lobby.find_room(room_id)
 	room.game_over()
+
+func set_local_multi(room_id: String, enabled: bool, peer_id: int) -> void:
+	var room := lobby.find_room(room_id)
+	var second_player := room.find_2p(peer_id)
+	if enabled:
+		if second_player != null:
+			return
+		var new_2p_color = Team.PLAYER_COLOR if room.battle_mode == BattleMode.MONSTER else Team.SECOND_PLAYER_COLOR
+		var new_2p = Character.new(Vector2i.ZERO, 2, new_2p_color, peer_id, true)
+		room.add_character(new_2p)
+	else:
+		if second_player == null:
+			return
+		room.remove_character(second_player)
+
+func set_monster_mode(room_id: String, enabled: bool, peer_id: int) -> void:
+	var room := lobby.find_room(room_id)
+	var second_player := room.find_2p(peer_id)
+	room.set_battle_mode(BattleMode.MONSTER if enabled else BattleMode.LOCAL_MULTI)
+	if second_player != null:
+		second_player.color = Team.PLAYER_COLOR if room.battle_mode == BattleMode.MONSTER else Team.SECOND_PLAYER_COLOR

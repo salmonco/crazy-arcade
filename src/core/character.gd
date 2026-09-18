@@ -33,12 +33,14 @@ var max_water_stream_length := WATER_STREAM_LENGTH
 var speed := SPEED
 
 var joined_room_id: String
+var is_2p: bool
 
-func _init(start_position: Vector2i, seat_number: int = 0, team_color: Color = Color.RED, peer_id: int = 0) -> void:
+func _init(start_position: Vector2i, seat_number: int = 0, team_color: Color = Color.RED, peer_id: int = 0, _is_2p: bool = false) -> void:
 	continuous_position = start_position
 	number = seat_number
 	color = team_color
 	id = peer_id
+	is_2p = _is_2p
 
 func init_player() -> void:
 	speed = Character.SPEED

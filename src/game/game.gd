@@ -8,7 +8,6 @@ extends Node
 const URL := "ws://localhost:%d" % Server.PORT
 
 var current_room: Room
-var second_player_character: Character
 var peer_id: int
 
 func _ready() -> void:
@@ -53,6 +52,14 @@ func request_start_battle(room_id: String) -> void:
 func request_finish_battle(room_id: String) -> void:
 	pass
 
+@rpc("any_peer", "call_remote", "reliable")
+func request_set_local_multi(room_id: String, enabled: bool) -> void:
+	pass
+
+@rpc("any_peer", "call_remote", "reliable")
+func request_set_monster_mode(room_id: String, enabled: bool) -> void:
+	pass
+
 @rpc("authority", "call_remote", "reliable")
 func lobby_changed(_lobby: Lobby) -> void:
 	lobby_view.render(_lobby)
@@ -61,7 +68,6 @@ func lobby_changed(_lobby: Lobby) -> void:
 		return
 	var room := _lobby.find_room(character.joined_room_id)
 	if room == null:
-		_remove_second_player()
 		current_room = null
 		room_view.visible = false
 		lobby_view.visible = true
@@ -93,31 +99,7 @@ func finish_game() -> void:
 	request_finish_battle.rpc_id(1, current_room.id)
 
 func set_local_multi(enabled: bool) -> void:
-	if enabled:
-		_add_second_player()
-	else:
-		_remove_second_player()
-	room_view.render(current_room)
-
-func _add_second_player() -> void:
-	if second_player_character != null:
-		return
-	second_player_character = Character.new(Vector2i.ZERO, 2, _second_player_color())
-	current_room.add_character(second_player_character)
-
-func _remove_second_player() -> void:
-	if second_player_character == null:
-		return
-	current_room.remove_character(second_player_character)
-	second_player_character = null
+	request_set_local_multi.rpc_id(1, current_room.id, enabled)
 
 func set_monster_mode(enabled: bool) -> void:
-	current_room.set_battle_mode(BattleMode.MONSTER if enabled else BattleMode.LOCAL_MULTI)
-	if second_player_character != null:
-		second_player_character.color = _second_player_color()
-	room_view.render(current_room)
-
-func _second_player_color() -> Color:
-	if current_room.battle_mode == BattleMode.MONSTER:
-		return Team.PLAYER_COLOR
-	return Team.SECOND_PLAYER_COLOR
+	request_set_monster_mode.rpc_id(1, current_room.id, enabled)

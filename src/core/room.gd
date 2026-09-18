@@ -88,6 +88,12 @@ func has_npc() -> bool:
 			return true
 	return false
 
+func find_2p(peer_id: int) -> Character:
+	for character in _characters:
+		if character.id == peer_id and character.is_2p:
+			return character
+	return null
+
 func _remove_npcs() -> void:
 	for character in _characters.duplicate():
 		if character is Npc:

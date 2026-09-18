@@ -50,5 +50,8 @@ func leave_room(room_id: String, peer_id: int) -> bool:
 	var character := find_character(peer_id)
 	if character == null:
 		return false
+	var second_player := room.find_2p(peer_id)
+	if second_player != null:
+		room.remove_character(second_player)
 	room.remove_character(character)
 	return true

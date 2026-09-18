@@ -107,3 +107,19 @@ func test_배틀을_종료할_수_있다() -> void:
 	assert_that(room.get_battle()).is_not_null()
 	_server.finish_battle(room.id)
 	assert_that(room.get_battle()).is_null()
+
+func test_로컬_멀티_모드를_활성화하면_2P_캐릭터가_생긴다() -> void:
+	var peer_id := 12345
+	_server.on_peer_connected(peer_id)
+	var room := _server.create_room()
+	assert_that(room.find_2p(peer_id)).is_null()
+	_server.set_local_multi(room.id, true, peer_id)
+	assert_that(room.find_2p(peer_id)).is_not_null()
+
+func test_몬스터_모드를_활성화하면_방에_NPC가_생긴다() -> void:
+	var peer_id := 12345
+	_server.on_peer_connected(peer_id)
+	var room := _server.create_room()
+	assert_bool(room.has_npc()).is_false()
+	_server.set_monster_mode(room.id, true, peer_id)
+	assert_bool(room.has_npc()).is_true()
