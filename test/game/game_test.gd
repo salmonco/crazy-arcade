@@ -431,7 +431,7 @@ func test_피어가_접속하면_로비에_해당_피어의_캐릭터가_생긴�
 
 func test_피어가_접속을_끊으면_로비에_해당_피어의_캐릭터가_사라진다() -> void:
 	assert_that(_game.lobby.find_character(_game.peer_id)).is_not_null()
-	_game.on_peer_disconnected()
+	_game.on_peer_disconnected(_game.peer_id)
 	assert_that(_game.lobby.find_character(_game.peer_id)).is_null()
 
 func test_피어가_방에_입장한_상태인데_접속을_끊으면_방과_로비에서_피어의_캐릭터가_사라진다() -> void:
@@ -440,7 +440,7 @@ func test_피어가_방에_입장한_상태인데_접속을_끊으면_방과_로
 	var character := _game.lobby.find_character(_game.peer_id)
 	assert_that(_game.lobby.find_room(room.id).find_character(_game.peer_id)).is_equal(character)
 	assert_that(_game.lobby.find_character(_game.peer_id)).is_not_null()
-	_game.on_peer_disconnected()
+	_game.on_peer_disconnected(_game.peer_id)
 	assert_that(_game.lobby.find_room(room.id).find_character(_game.peer_id)).is_null()
 	assert_that(_game.lobby.find_character(_game.peer_id)).is_null()
 

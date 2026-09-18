@@ -44,10 +44,10 @@ func on_peer_connected(id: int) -> void:
 	var character := Character.new(Vector2i.ZERO, 0, Color.RED, id)
 	lobby.add_character(character)
 
-func on_peer_disconnected() -> void:
+func on_peer_disconnected(id: int) -> void:
 	if current_room != null:
 		leave_room()
-	var character := lobby.find_character(peer_id)
+	var character := lobby.find_character(id)
 	lobby.remove_character(character)
 
 func create_room() -> void:
