@@ -48,5 +48,7 @@ func enter_room(room_id: String, peer_id: int) -> bool:
 func leave_room(room_id: String, peer_id: int) -> bool:
 	var room := find_room(room_id)
 	var character := find_character(peer_id)
+	if character == null:
+		return false
 	room.remove_character(character)
 	return true

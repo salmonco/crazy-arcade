@@ -23,8 +23,6 @@ func _ready() -> void:
 	room_view.local_multi_check.toggled.connect(set_local_multi)
 	battle_view.game_over.connect(finish_game)
 	multiplayer.connected_to_server.connect(on_connected_to_server)
-	multiplayer.peer_connected.connect(on_peer_connected)
-	multiplayer.peer_disconnected.connect(on_peer_disconnected)
 
 func _create_peer() -> void:
 	var peer := WebSocketMultiplayerPeer.new()
@@ -39,22 +37,6 @@ func on_connected_to_server() -> void:
 	var character := Character.new(Vector2i.ZERO, 0, Color.RED, peer_id)
 	lobby.add_character(character)
 	player_character = character
-
-func on_peer_connected(id: int) -> void:
-	var character := Character.new(Vector2i.ZERO, 0, Color.RED, id)
-	lobby.add_character(character)
-
-func on_peer_disconnected(id: int) -> void:
-	if current_room != null:
-		var character := lobby.find_character(peer_id)
-		current_room.remove_character(character)
-		_remove_second_player()
-		current_room = null
-		lobby_view.render(lobby)
-		room_view.visible = false
-		lobby_view.visible = true
-	var character := lobby.find_character(id)
-	lobby.remove_character(character)
 
 @rpc("any_peer", "call_remote", "reliable")
 func request_create_room() -> void:
