@@ -4,7 +4,7 @@ extends RefCounted
 const MINIMUM_TEAM_COUNT_TO_START_GAME := 2
 
 var _characters: Array[Character] = []
-var _battle: Battle
+var _battle: Battle = null
 var id: String
 var battle_mode: StringName = BattleMode.LOCAL_MULTI
 var messages: Array[Message] = []

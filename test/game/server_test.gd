@@ -88,3 +88,12 @@ func test_피어가_접속하고_방에_입장해도_로비엔_해당_피어의_
 	var room := _server.create_room()
 	_server.enter_room(room.id, peer_id)
 	assert_that(_server.lobby.find_character(peer_id)).is_not_null()
+
+func test_방에서_배틀을_시작할_수_있다() -> void:
+	var peer_id := 12345
+	_server.on_peer_connected(peer_id)
+	var room := _server.create_room()
+	_server.enter_room(room.id, peer_id)
+	assert_that(room.get_battle()).is_null()
+	_server.start_battle(room.id)
+	assert_that(room.get_battle()).is_not_null()

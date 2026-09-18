@@ -35,6 +35,11 @@ func _request_leave_room(room_id: String) -> void:
 	_lobby.leave_room(room_id, _game.peer_id)
 	_game.lobby_changed(_lobby)
 
+func _request_start_battle(room_id: String) -> void:
+	var room := _lobby.find_room(room_id)
+	room.game_start()
+	_game.lobby_changed(_lobby)
+
 # 로비에서 방 입장
 func test_방_ID로_입장하면_방_화면이_된다() -> void:
 	_request_create_room_and_enter_room()
@@ -233,7 +238,7 @@ func test_몬스터_모드를_선택하고_로컬_멀티_모드를_선택해도_
 func test_방에서_게임을_시작하면_배틀_화면이_된다() -> void:
 	_request_create_room_and_enter_room()
 	_game.set_monster_mode(true)
-	_game.start_game()
+	_request_start_battle(_game.current_room.id)
 	assert_that(_game.battle_view.battle).is_equal(_game.current_room.get_battle())
 	assert_bool(_game.battle_view.visible).is_true()
 	assert_bool(_game.room_view.visible).is_false()
@@ -299,12 +304,12 @@ func _start_monster_battle_with_second_player() -> void:
 	_request_create_room_and_enter_room()
 	_game.set_monster_mode(true)
 	_game.set_local_multi(true)
-	_game.start_game()
+	_request_start_battle(_game.current_room.id)
 
 func _start_monster_battle() -> void:
 	_request_create_room_and_enter_room()
 	_game.set_monster_mode(true)
-	_game.start_game()
+	_request_start_battle(_game.current_room.id)
 
 func test_방의_시작_버튼이_게임_시작에_연결되어_있다() -> void:
 	assert_bool(_game.room_view.start_button.pressed.is_connected(_game.start_game)).is_true()

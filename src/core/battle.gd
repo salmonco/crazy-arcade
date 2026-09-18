@@ -9,7 +9,7 @@ var _map: Map
 var _mode: StringName
 var game_over_elapsed_time: float = 0
 var should_go_to_room: bool = false
-var _is_finished := false
+var is_finished := false
 
 func _init(map: Map, mode: StringName) -> void:
 	_map = map
@@ -17,7 +17,7 @@ func _init(map: Map, mode: StringName) -> void:
 
 func tick(delta: float) -> void:
 	should_go_to_room = false
-	if _is_finished:
+	if is_finished:
 		return
 	_map.tick(delta)
 	if not is_game_over():
@@ -26,7 +26,7 @@ func tick(delta: float) -> void:
 		game_over_elapsed_time += delta
 	if game_over_elapsed_time >= GAME_OVER_AFTER_SECOND:
 		should_go_to_room = true
-		_is_finished = true
+		is_finished = true
 
 func is_game_over() -> bool:
 	return has_winner() or is_draw

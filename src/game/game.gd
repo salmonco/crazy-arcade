@@ -45,6 +45,10 @@ func request_enter_room(room_id: String) -> void:
 func request_leave_room(room_id: String) -> void:
 	pass
 
+@rpc("any_peer", "call_remote", "reliable")
+func request_start_battle(room_id: String) -> void:
+	pass
+
 @rpc("authority", "call_remote", "reliable")
 func lobby_changed(_lobby: Lobby) -> void:
 	lobby_view.render(_lobby)
@@ -60,6 +64,10 @@ func lobby_changed(_lobby: Lobby) -> void:
 		room_view.render(room)
 		lobby_view.visible = false
 		room_view.visible = true
+		if room.get_battle() != null and not room.get_battle().is_finished:
+			battle_view.show_battle(current_room.get_battle())
+			room_view.visible = false
+			battle_view.visible = true
 
 func create_room() -> void:
 	request_create_room.rpc_id(1)
@@ -71,10 +79,7 @@ func leave_room(room_id: String) -> void:
 	request_leave_room.rpc_id(1, room_id)
 
 func start_game() -> void:
-	current_room.game_start()
-	battle_view.show_battle(current_room.get_battle())
-	room_view.visible = false
-	battle_view.visible = true
+	request_start_battle.rpc_id(1, current_room.id)
 
 func finish_game() -> void:
 	current_room.game_over()

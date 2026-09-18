@@ -23,6 +23,7 @@ func on_peer_connected(id: int) -> void:
 	print("피어 접속: %d" % id)
 	var character := Character.new(Vector2i.ZERO, 0, Color.RED, id)
 	lobby.add_character(character)
+	# TODO: lobby_changed.rpc()
 
 func on_peer_disconnected(id: int) -> void:
 	print("피어 접속 끊김: %d" % id)
@@ -30,18 +31,27 @@ func on_peer_disconnected(id: int) -> void:
 	if character.joined_room_id != "":
 		leave_room(character.joined_room_id, id)
 	lobby.remove_character(character)
+	# TODO: lobby_changed.rpc()
 
 @rpc("any_peer", "call_remote", "reliable")
 func request_create_room() -> void:
 	create_room()
+	# TODO: lobby_changed.rpc()
 
 @rpc("any_peer", "call_remote", "reliable")
 func request_enter_room(room_id: String) -> void:
 	enter_room(room_id, multiplayer.get_remote_sender_id())
+	# TODO: lobby_changed.rpc()
 
 @rpc("any_peer", "call_remote", "reliable")
 func request_leave_room(room_id: String) -> void:
 	leave_room(room_id, multiplayer.get_remote_sender_id())
+	# TODO: lobby_changed.rpc()
+
+@rpc("any_peer", "call_remote", "reliable")
+func request_start_battle(room_id: String) -> void:
+	start_battle(room_id)
+	# TODO: lobby_changed.rpc()
 
 @rpc("authority", "call_remote", "reliable")
 func lobby_changed(lobby: Lobby) -> void:
@@ -55,3 +65,7 @@ func enter_room(room_id: String, peer_id: int) -> void:
 
 func leave_room(room_id: String, peer_id: int) -> void:
 	lobby.leave_room(room_id, peer_id)
+
+func start_battle(room_id: String) -> void:
+	var room := lobby.find_room(room_id)
+	room.game_start()
