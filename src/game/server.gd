@@ -69,7 +69,7 @@ func request_set_monster_mode(room_id: String, enabled: bool) -> void:
 	# TODO: lobby_changed.rpc()
 
 @rpc("authority", "call_remote", "reliable")
-func lobby_changed(lobby: Lobby) -> void:
+func lobby_changed(_lobby: Lobby) -> void:
 	pass
 
 func create_room() -> Room:

@@ -37,27 +37,27 @@ func request_create_room() -> void:
 	pass
 
 @rpc("any_peer", "call_remote", "reliable")
-func request_enter_room(room_id: String) -> void:
+func request_enter_room(_room_id: String) -> void:
 	pass
 
 @rpc("any_peer", "call_remote", "reliable")
-func request_leave_room(room_id: String) -> void:
+func request_leave_room(_room_id: String) -> void:
 	pass
 
 @rpc("any_peer", "call_remote", "reliable")
-func request_start_battle(room_id: String) -> void:
+func request_start_battle(_room_id: String) -> void:
 	pass
 
 @rpc("any_peer", "call_remote", "reliable")
-func request_finish_battle(room_id: String) -> void:
+func request_finish_battle(_room_id: String) -> void:
 	pass
 
 @rpc("any_peer", "call_remote", "reliable")
-func request_set_local_multi(room_id: String, enabled: bool) -> void:
+func request_set_local_multi(_room_id: String, _enabled: bool) -> void:
 	pass
 
 @rpc("any_peer", "call_remote", "reliable")
-func request_set_monster_mode(room_id: String, enabled: bool) -> void:
+func request_set_monster_mode(_room_id: String, _enabled: bool) -> void:
 	pass
 
 @rpc("authority", "call_remote", "reliable")
