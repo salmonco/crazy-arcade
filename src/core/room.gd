@@ -108,3 +108,67 @@ func _npc() -> Npc:
 		if character is Npc:
 			return character
 	return null
+
+func snapshot(peer_id: int) -> Dictionary:
+	var seats_snapshot: Array[Dictionary] = []
+	for character in _characters:
+		seats_snapshot.append({
+			"number": character.number,
+			"color": character.color,
+			"is_npc": character is Npc
+		})
+	return {
+		"id": id,
+		"mode": battle_mode,
+		"can_battle_start": can_game_start(),
+		"local_multi_on": find_2p(peer_id) != null,
+		"seats": seats_snapshot,
+	}
+
+func battle_snapshot() -> Dictionary:
+	var characters_snapshot: Array[Dictionary] = []
+	var seats_snapshot: Array[Dictionary] = []
+	var water_balloons_snapshot: Array[Dictionary] = []
+	var water_streams_snapshot: Array[Dictionary] = []
+	var game_items_snapshot: Array[Dictionary] = []
+	for character in _battle.get_map().characters():
+		characters_snapshot.append({
+			"number": character.number,
+			"is_npc": character is Npc,
+			"cell": character.continuous_position,
+			"color": character.color,
+			"facing": character.facing,
+			"is_trapped": character.is_trapped(),
+		})
+	for character in _characters:
+		seats_snapshot.append({
+			"number": character.number,
+			"is_npc": character is Npc,
+			"color": character.color,
+			"is_out": character.is_out
+		})
+	for water_balloon in _battle.get_map().water_balloons():
+		water_balloons_snapshot.append({
+			"cell": water_balloon.position,
+			"owner_number": water_balloon.placed_by.number
+		})
+	for water_stream in _battle.get_map().water_streams():
+		water_streams_snapshot.append({
+			"cell": water_stream.position,
+			"direction": water_stream.direction,
+			"position_type": water_stream.position_type
+		})
+	for game_item in _battle.get_map().game_items():
+		game_items_snapshot.append({
+			"cell": game_item.position,
+			"type": game_item.type
+		})
+	return {
+		"characters": characters_snapshot,
+		"seats": seats_snapshot,
+		"water_balloons": water_balloons_snapshot,
+		"water_streams": water_streams_snapshot,
+		"game_items": game_items_snapshot,
+		"winner_color": _battle.winner,
+		"is_draw": _battle.is_draw,
+	}

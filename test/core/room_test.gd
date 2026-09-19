@@ -133,3 +133,82 @@ func test_캐릭터가_방에_보낸_메시지는_순서대로_쌓인다() -> vo
 	message2.sender_id = character2.id
 	message2.contents = "hello"
 	assert_that(room.messages).is_equal([message1, message2])
+
+# 스냅샷
+func _room_with_four_seats() -> Room:
+	var room := Room.new()
+	room.add_character(Character.new(Vector2i(3, 5), 0, Color.RED, 11))
+	room.add_character(Character.new(Vector2i(7, 2), 0, Color.GREEN, 22))
+	room.add_character(Character.new(Vector2i(4, 9), 0, Color.YELLOW, 11, true))
+	room.set_battle_mode(BattleMode.MONSTER)
+	return room
+
+func test_방_스냅샷은_방_정보와_자리_목록을_담는다() -> void:
+	var room := _room_with_four_seats()
+	assert_that(room.snapshot(11)).is_equal({
+		"id": room.id,
+		"mode": BattleMode.MONSTER,
+		"can_battle_start": true,
+		"local_multi_on": true,
+		"seats": [
+			{"number": 1, "color": Color.RED, "is_npc": false},
+			{"number": 2, "color": Color.GREEN, "is_npc": false},
+			{"number": 3, "color": Color.YELLOW, "is_npc": false},
+			{"number": 4, "color": Team.MONSTER_COLOR, "is_npc": true},
+		],
+	})
+
+func test_방_스냅샷의_로컬멀티_켜짐은_피어마다_다르다() -> void:
+	var room := _room_with_four_seats()
+	assert_bool(room.snapshot(11)["local_multi_on"]).is_true()
+	assert_bool(room.snapshot(22)["local_multi_on"]).is_false()
+
+func test_방_스냅샷은_RPC로_보낼_수_있다() -> void:
+	var snapshot: Dictionary = _room_with_four_seats().snapshot(11)
+	assert_that(bytes_to_var(var_to_bytes(snapshot))).is_equal(snapshot)
+
+# 배틀 스냅샷
+func _room_in_battle() -> Room:
+	var room := Room.new()
+	room.add_character(Character.new(Vector2i.ZERO, 0, Color.RED, 11))
+	room.add_character(Character.new(Vector2i.ZERO, 0, Color.GREEN, 22))
+	room.game_start()
+	var map := room.get_battle().get_map()
+	map.add_water_balloon(WaterBalloon.new(Vector2i(2, 11), room.characters()[0]))
+	map.add_water_stream(WaterStream.new(Vector2i(7, 3), Vector2i.UP, "end"))
+	map.add_game_item(GameItem.INCREASE_SPEED, Vector2i(9, 4))
+	map.let_character_out(room.characters()[1])
+	room.get_battle().tick(0.001)
+	return room
+
+func test_배틀_스냅샷은_맵_위의_것과_참가자_명부를_담는다() -> void:
+	var room := _room_in_battle()
+	assert_that(room.battle_snapshot()).is_equal({
+		"characters": [
+			{
+				"number": 1, "is_npc": false, "cell": Vector2(1, 6),
+				"color": Color.RED, "facing": Vector2i.DOWN, "is_trapped": false,
+			},
+		],
+		"seats": [
+			{"number": 1, "is_npc": false, "color": Color.RED, "is_out": false},
+			{"number": 2, "is_npc": false, "color": Color.GREEN, "is_out": true},
+		],
+		"water_balloons": [{"cell": Vector2i(2, 11), "owner_number": 1}],
+		"water_streams": [{"cell": Vector2i(7, 3), "direction": Vector2i.UP, "position_type": "end"}],
+		"game_items": [{"cell": Vector2i(9, 4), "type": GameItem.INCREASE_SPEED}],
+		"winner_color": Color.RED,
+		"is_draw": false,
+	})
+
+func test_배틀_스냅샷에서_탈락한_캐릭터는_그리는_목록에서_빠지고_명부에_남는다() -> void:
+	var snapshot: Dictionary = _room_in_battle().battle_snapshot()
+	var drawn: Array = snapshot["characters"]
+	var seats: Array = snapshot["seats"]
+	assert_int(drawn.size()).is_equal(1)
+	assert_int(seats.size()).is_equal(2)
+	assert_bool(seats[1]["is_out"]).is_true()
+
+func test_배틀_스냅샷은_RPC로_보낼_수_있다() -> void:
+	var snapshot: Dictionary = _room_in_battle().battle_snapshot()
+	assert_that(bytes_to_var(var_to_bytes(snapshot))).is_equal(snapshot)

@@ -75,3 +75,31 @@ func test_로비에_없는_피어는_방에_입장하지_못한다() -> void:
 	var room := lobby.create_room()
 	assert_bool(lobby.enter_room(room.id, 47324)).is_false()
 	assert_array(room.characters()).is_empty()
+
+# 스냅샷
+func _enter_new_character(lobby: Lobby, room: Room, peer_id: int) -> void:
+	lobby.add_character(Character.new(Vector2i.ZERO, 0, Color.RED, peer_id))
+	lobby.enter_room(room.id, peer_id)
+
+func test_로비_스냅샷은_방마다_아이디와_인원수와_모드를_담는다() -> void:
+	var lobby := Lobby.new()
+	var quiet_room := lobby.create_room()
+	var crowded_room := lobby.create_room()
+	_enter_new_character(lobby, quiet_room, 11)
+	_enter_new_character(lobby, crowded_room, 22)
+	_enter_new_character(lobby, crowded_room, 33)
+	_enter_new_character(lobby, crowded_room, 44)
+	crowded_room.set_battle_mode(BattleMode.MONSTER)
+	assert_that(lobby.snapshot()).is_equal({
+		"rooms": [
+			{"id": quiet_room.id, "character_count": 1, "mode": BattleMode.LOCAL_MULTI},
+			{"id": crowded_room.id, "character_count": 4, "mode": BattleMode.MONSTER},
+		]
+	})
+
+func test_로비_스냅샷은_RPC로_보낼_수_있다() -> void:
+	var lobby := Lobby.new()
+	var room := lobby.create_room()
+	_enter_new_character(lobby, room, 11)
+	var snapshot: Dictionary = lobby.snapshot()
+	assert_that(bytes_to_var(var_to_bytes(snapshot))).is_equal(snapshot)

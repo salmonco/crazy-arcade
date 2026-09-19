@@ -55,3 +55,13 @@ func leave_room(room_id: String, peer_id: int) -> bool:
 		room.remove_character(second_player)
 	room.remove_character(character)
 	return true
+
+func snapshot() -> Dictionary:
+	var rooms_snapshot: Array[Dictionary] = []
+	for room in rooms:
+		rooms_snapshot.append({
+			"id": room.id,
+			"character_count": room.characters().size(),
+			"mode": room.battle_mode
+		})
+	return { "rooms": rooms_snapshot }
