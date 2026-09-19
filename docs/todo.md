@@ -51,10 +51,9 @@
 - [x] 같은 팀이면 물방울 구출
 - [x] 배틀이 종료되면 다시 방으로 돌아가기
 - [x] 방에서 2P 캐릭터는 NPC보다 앞 자리에 있다
+- [x] 피어 접속. WebSocket(TCP). (ENet은 UDP 쓰는데, 웹 브라우저에서 지원하는 추상화 라이브러리가 없고 소켓에 직접 접근이 안 돼서 기각)
+- [ ] RPC 함수에 lobby 전달
 - [ ] 방에서 2P 캐릭터는 항상 1P 캐릭터 바로 오른쪽 자리에 붙어있다 -> 멀티플레이어일 때 확장
-- [ ] 온라인 멀티. WebSocket(TCP). (ENet은 UDP 쓰는데, 웹 브라우저에서 지원하는 추상화 라이브러리가 없고 소켓에 직접 접근이 안 돼서 기각)
-  - https://docs.godotengine.org/ko/4.x/tutorials/networking/high_level_multiplayer.html
-  - https://docs.godotengine.org/ko/4.x/tutorials/networking/websocket.html
 - [ ] 지연시간 답답하면 WebRTC(UDP) 시도
 - [ ] 방 안에 있는 캐릭터와, 배틀이 시작됐을 때의 캐릭터(플레이어)를 구분할 필요가 있어보임
 - [ ] continuous_position를 생성자 함수에서 할당하는 게 맞을까?
