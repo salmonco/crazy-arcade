@@ -22,7 +22,7 @@ func test_밖에서_만든_배틀을_받아_그린다() -> void:
 	map.add_character(Character.new(Vector2i(3, 5), 1, Color.RED))
 	map.add_character(Character.new(Vector2i(9, 2), 2, Color.BLUE))
 	var battle := Battle.new(map, BattleMode.LOCAL_MULTI)
-	battle_view.show_battle(battle)
+	battle_view.render(battle)
 	assert_that(battle_view.battle).is_equal(battle)
 	assert_that(battle_view.first_character).is_equal(map.characters()[0])
 	assert_int(battle_view.view_by_character.size()).is_equal(2)
@@ -33,7 +33,7 @@ func test_1P와_2P를_맵에_들어간_순서가_아니라_자리_번호로_찾�
 	var map := Map.new()
 	map.add_character(Character.new(Vector2i(9, 2), 2, Color.BLUE))
 	map.add_character(Character.new(Vector2i(3, 5), 1, Color.RED))
-	battle_view.show_battle(Battle.new(map, BattleMode.LOCAL_MULTI))
+	battle_view.render(Battle.new(map, BattleMode.LOCAL_MULTI))
 	assert_int(battle_view.first_character.number).is_equal(1)
 	assert_int(battle_view.second_character.number).is_equal(2)
 

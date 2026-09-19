@@ -45,7 +45,7 @@ func _ready() -> void:
 func sync_overlay() -> void:
 	overlay.visible = visible
 
-func show_battle(new_battle: Battle) -> void:
+func render(new_battle: Battle) -> void:
 	battle = new_battle
 	humans = _seated_humans()
 	_render_characters()
@@ -88,7 +88,7 @@ func start_battle(mode: StringName) -> void:
 			var human2 := Character.new(Vector2i(13, 6), 2, Color.BLUE)
 			map.add_character(human1)
 			map.add_character(human2)
-	show_battle(Battle.new(map, mode))
+	render(Battle.new(map, mode))
 
 func handle_key_pressed(key: Key, location: KeyLocation = KEY_LOCATION_UNSPECIFIED) -> void:
 	var game_key := GameKey.from_key(key, location)

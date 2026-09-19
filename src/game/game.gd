@@ -76,7 +76,7 @@ func lobby_changed(_lobby: Lobby) -> void:
 	room_view.render(room)
 	lobby_view.visible = false
 	if room.get_battle() != null and not room.get_battle().is_finished:
-		battle_view.show_battle(current_room.get_battle())
+		battle_view.render(current_room.get_battle())
 		room_view.visible = false
 		battle_view.visible = true
 	else:
