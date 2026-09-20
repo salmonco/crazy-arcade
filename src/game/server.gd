@@ -23,7 +23,7 @@ func on_peer_connected(id: int) -> void:
 	print("피어 접속: %d" % id)
 	var character := Character.new(Vector2i.ZERO, 0, Color.RED, id)
 	lobby.add_character(character)
-	# _broadcast()
+	_broadcast()
 
 func on_peer_disconnected(id: int) -> void:
 	print("피어 접속 끊김: %d" % id)
@@ -31,42 +31,42 @@ func on_peer_disconnected(id: int) -> void:
 	if character.joined_room_id != "":
 		leave_room(character.joined_room_id, id)
 	lobby.remove_character(character)
-	# _broadcast()
+	_broadcast()
 
 @rpc("any_peer", "call_remote", "reliable")
 func request_create_room() -> void:
 	create_room()
-	# _broadcast()
+	_broadcast()
 
 @rpc("any_peer", "call_remote", "reliable")
 func request_enter_room(room_id: String) -> void:
 	enter_room(room_id, multiplayer.get_remote_sender_id())
-	# _broadcast()
+	_broadcast()
 
 @rpc("any_peer", "call_remote", "reliable")
 func request_leave_room(room_id: String) -> void:
 	leave_room(room_id, multiplayer.get_remote_sender_id())
-	# _broadcast()
+	_broadcast()
 
 @rpc("any_peer", "call_remote", "reliable")
 func request_start_battle(room_id: String) -> void:
 	start_battle(room_id)
-	# _broadcast()
+	_broadcast()
 
 @rpc("any_peer", "call_remote", "reliable")
 func request_finish_battle(room_id: String) -> void:
 	finish_battle(room_id)
-	# _broadcast()
+	_broadcast()
 
 @rpc("any_peer", "call_remote", "reliable")
 func request_set_local_multi(room_id: String, enabled: bool) -> void:
 	set_local_multi(room_id, enabled, multiplayer.get_remote_sender_id())
-	# _broadcast()
+	_broadcast()
 
 @rpc("any_peer", "call_remote", "reliable")
 func request_set_monster_mode(room_id: String, enabled: bool) -> void:
 	set_monster_mode(room_id, enabled, multiplayer.get_remote_sender_id())
-	# _broadcast()
+	_broadcast()
 
 @rpc("authority", "call_remote", "reliable")
 func screen_changed(_snapshot: Dictionary) -> void:
@@ -113,5 +113,7 @@ func _second_player_color(battle_mode: StringName) -> Color:
 	return Team.PLAYER_COLOR if battle_mode == BattleMode.MONSTER else Team.SECOND_PLAYER_COLOR
 
 func _broadcast() -> void:
+	if multiplayer == null:
+		return
 	for peer_id in multiplayer.get_peers():
 		screen_changed.rpc_id(peer_id, lobby.screen_snapshot(peer_id))
