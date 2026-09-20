@@ -99,8 +99,8 @@ func handle_key_released(key: Key) -> void:
 func tick(delta: float) -> void:
 	if battle == null:
 		return
+	_apply_input()
 	battle.tick(delta)
-	_handle_characters(delta)
 	_render_water_balloons()
 	_render_water_streams()
 	_render_characters()
@@ -120,14 +120,11 @@ func _unhandled_input(event: InputEvent) -> void:
 func _process(delta: float) -> void:
 	tick(delta)
 
-func _handle_characters(delta: float) -> void:
+func _apply_input() -> void:
 	for character in battle.get_map().characters():
 		if character is Npc:
-			character.move(character.decide_move_direction(battle.get_map()), delta, battle.get_map().water_balloon_positions())
-			if character.should_place_water_balloon(battle.get_map()):
-				character.place_water_balloon(battle.get_map())
-		else:
-			character.move(_read_direction_for(character), delta, battle.get_map().water_balloon_positions())
+			continue
+		character.heading = _read_direction_for(character)
 
 func _render_characters() -> void:
 	# 사라진 캐릭터의 뷰 정리

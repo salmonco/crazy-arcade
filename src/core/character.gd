@@ -25,6 +25,7 @@ var continuous_position: Vector2
 var is_out: bool = false
 var bubble: Bubble = null
 var facing: Vector2i = FACING_DIRECTION
+var heading: Vector2i = Vector2i.ZERO # 이동 방향
 var number: int
 var color: Color
 

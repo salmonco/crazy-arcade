@@ -83,6 +83,17 @@ func tick(delta: float) -> void:
 		if water_stream_positions().has(game_item.position):
 			_remove_game_item(game_item)
 
+	_move_characters(delta)
+
+func _move_characters(delta: float) -> void:
+	for character in _characters.duplicate():
+		if character is Npc:
+			character.heading = character.decide_move_direction(self)
+		if character.heading != Vector2i.ZERO:
+			character.move(character.heading, delta, water_balloon_positions())
+		if character is Npc and character.should_place_water_balloon(self):
+			character.place_water_balloon(self)
+
 func add_water_streams(center_cell: Vector2i, length: int, elapsed_time: float = 0.0) -> void:
 	var center_water_stream := WaterStream.new(center_cell, Vector2i.ZERO, "center", elapsed_time)
 	add_water_stream(center_water_stream)

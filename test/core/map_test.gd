@@ -348,3 +348,39 @@ func test_캐릭터는_물방울에_갇혀_있는_같은_팀의_캐릭터를_구
 	_map.tick(Bubble.ALIVE_SECONDS * 0.5)
 	assert_bool(character2.is_trapped()).is_false()
 	assert_bool(character1.is_trapped()).is_false()
+
+# 캐릭터 이동
+func test_맵이_시간을_흘리면_캐릭터마다_자기_방향으로_움직인다() -> void:
+	var map := Map.new()
+	var walker := Character.new(Vector2i(3, 5))
+	var climber := Character.new(Vector2i(9, 7))
+	map.add_character(walker)
+	map.add_character(climber)
+	walker.heading = Vector2i.RIGHT
+	climber.heading = Vector2i.UP
+	map.tick(1.0 / Character.SPEED) # 한 칸만큼
+	assert_that(walker.continuous_position).is_equal(Vector2(4, 5))
+	assert_that(climber.continuous_position).is_equal(Vector2(9, 6))
+
+func test_방향이_없는_캐릭터는_시간이_흘러도_제자리다() -> void:
+	var map := Map.new()
+	var character := Character.new(Vector2i(3, 5))
+	map.add_character(character)
+	map.tick(1.0 / Character.SPEED)
+	assert_that(character.continuous_position).is_equal(Vector2(3, 5))
+
+func test_NPC는_방향을_받지_않아도_스스로_정해_움직인다() -> void:
+	var map := Map.new()
+	var npc := Npc.new(Vector2i(3, 5), 1, Team.MONSTER_COLOR)
+	map.add_character(npc)
+	map.add_character(Character.new(Vector2i(9, 5), 2, Color.RED)) # 오른쪽에 적
+	map.tick(1.0 / Character.SPEED)
+	assert_that(npc.continuous_position).is_equal(Vector2(4, 5))
+
+func test_NPC는_붙어_있는_적에게_물풍선을_놓는다() -> void:
+	var map := Map.new()
+	map.add_character(Npc.new(Vector2i(3, 5), 1, Team.MONSTER_COLOR))
+	map.add_character(Character.new(Vector2i(4, 5), 2, Color.RED))
+	assert_int(map.water_balloon_count()).is_equal(0)
+	map.tick(0.01)
+	assert_int(map.water_balloon_count()).is_equal(1)
