@@ -103,3 +103,79 @@ func test_로비_스냅샷은_RPC로_보낼_수_있다() -> void:
 	_enter_new_character(lobby, room, 11)
 	var snapshot: Dictionary = lobby.snapshot()
 	assert_that(bytes_to_var(var_to_bytes(snapshot))).is_equal(snapshot)
+
+# 화면 스냅샷
+func _add_character(lobby: Lobby, peer_id: int, color: Color = Color.RED) -> Character:
+	var character := Character.new(Vector2i.ZERO, 0, color, peer_id)
+	lobby.add_character(character)
+	return character
+
+func _room_with_two_peers(lobby: Lobby) -> Room:
+	var room := lobby.create_room()
+	_add_character(lobby, 11)
+	_add_character(lobby, 22, Color.GREEN)
+	lobby.enter_room(room.id, 11)
+	lobby.enter_room(room.id, 22)
+	return room
+
+func test_같은_로비라도_피어마다_다른_화면을_본다() -> void:
+	var lobby := Lobby.new()
+	var room := lobby.create_room()
+	_add_character(lobby, 11)
+	_add_character(lobby, 22, Color.GREEN)
+	lobby.enter_room(room.id, 11)
+	assert_that(lobby.screen_snapshot(11)["screen"]).is_equal(Screen.ROOM)
+	assert_that(lobby.screen_snapshot(22)["screen"]).is_equal(Screen.LOBBY)
+
+func test_로비_화면_스냅샷에는_방_목록이_함께_실린다() -> void:
+	var lobby := Lobby.new()
+	lobby.create_room()
+	_add_character(lobby, 11)
+	assert_that(lobby.screen_snapshot(11)).is_equal({
+		"screen": Screen.LOBBY,
+		"lobby": lobby.snapshot(),
+	})
+
+func test_방_화면_스냅샷에는_방의_내용이_함께_실린다() -> void:
+	var lobby := Lobby.new()
+	var room := lobby.create_room()
+	_add_character(lobby, 11)
+	lobby.enter_room(room.id, 11)
+	assert_that(lobby.screen_snapshot(11)).is_equal({
+		"screen": Screen.ROOM,
+		"room": room.snapshot(11),
+	})
+
+func test_방_화면_스냅샷의_로컬멀티는_받는_피어_기준이다() -> void:
+	var lobby := Lobby.new()
+	var room := _room_with_two_peers(lobby)
+	room.add_character(Character.new(Vector2i.ZERO, 0, Color.YELLOW, 11, true))
+	assert_bool(lobby.screen_snapshot(11)["room"]["local_multi_on"]).is_true()
+	assert_bool(lobby.screen_snapshot(22)["room"]["local_multi_on"]).is_false()
+
+func test_배틀_중이면_배틀_화면을_본다() -> void:
+	var lobby := Lobby.new()
+	var room := _room_with_two_peers(lobby)
+	room.game_start()
+	var snapshot: Dictionary = lobby.screen_snapshot(11)
+	assert_that(snapshot["screen"]).is_equal(Screen.BATTLE)
+	assert_int(snapshot["battle"]["characters"].size()).is_equal(2)
+
+func test_배틀이_끝나면_다시_방_화면을_본다() -> void:
+	var lobby := Lobby.new()
+	var room := _room_with_two_peers(lobby)
+	room.game_start()
+	room.get_battle().is_finished = true
+	assert_that(lobby.screen_snapshot(11)["screen"]).is_equal(Screen.ROOM)
+
+func test_로비에_없는_피어에게는_화면을_지시하지_않는다() -> void:
+	var lobby := Lobby.new()
+	lobby.create_room()
+	assert_that(lobby.screen_snapshot(47324)).is_equal({"screen": null})
+
+func test_화면_스냅샷은_RPC로_보낼_수_있다() -> void:
+	var lobby := Lobby.new()
+	var room := _room_with_two_peers(lobby)
+	room.game_start()
+	var snapshot: Dictionary = lobby.screen_snapshot(11)
+	assert_that(bytes_to_var(var_to_bytes(snapshot))).is_equal(snapshot)
