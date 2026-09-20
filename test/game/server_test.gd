@@ -123,3 +123,19 @@ func test_몬스터_모드를_활성화하면_방에_NPC가_생긴다() -> void:
 	assert_bool(room.has_npc()).is_false()
 	_server.set_monster_mode(room.id, true, peer_id)
 	assert_bool(room.has_npc()).is_true()
+
+# tick
+func test_서버가_시간을_흘리면_방의_배틀이_흐른다() -> void:
+	var room := _server.create_room()
+	_server.on_peer_connected(11)
+	_server.on_peer_connected(22)
+	_server.enter_room(room.id, 11)
+	_server.enter_room(room.id, 22)
+	_server.start_battle(room.id)
+	var map := room.get_battle().get_map()
+	map.add_water_balloon(WaterBalloon.new(Vector2i(2, 11), room.characters()[0]))
+	var step := WaterBalloon.POP_AFTER_SECONDS * 0.8
+	_server.tick(step)
+	assert_int(map.water_balloon_count()).is_equal(1)
+	_server.tick(step)
+	assert_int(map.water_balloon_count()).is_equal(0)

@@ -54,6 +54,11 @@ func game_start() -> void:
 	_place_game_items(map)
 	_battle = Battle.new(map, battle_mode)
 
+func tick(delta: float) -> void:
+	if _battle == null:
+		return
+	_battle.tick(delta)
+
 func game_over() -> void:
 	for character in _characters:
 		character.init_player()
@@ -170,7 +175,8 @@ func battle_snapshot() -> Dictionary:
 			"number": character.number,
 			"is_npc": character is Npc,
 			"color": character.color,
-			"is_out": character.is_out
+			"is_out": character.is_out,
+			"peer_id": character.id,
 		})
 	for water_balloon in _battle.get_map().water_balloons():
 		water_balloons_snapshot.append({

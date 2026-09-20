@@ -179,3 +179,35 @@ func test_화면_스냅샷은_RPC로_보낼_수_있다() -> void:
 	room.game_start()
 	var snapshot: Dictionary = lobby.snapshot_for(11)
 	assert_that(bytes_to_var(var_to_bytes(snapshot))).is_equal(snapshot)
+
+# tick
+func _room_in_battle_with_balloon(lobby: Lobby, first_peer: int, second_peer: int, cell: Vector2i) -> Map:
+	var room := lobby.create_room()
+	_add_character(lobby, first_peer)
+	_add_character(lobby, second_peer, Color.GREEN)
+	lobby.enter_room(room.id, first_peer)
+	lobby.enter_room(room.id, second_peer)
+	room.game_start()
+	var map := room.get_battle().get_map()
+	map.add_water_balloon(WaterBalloon.new(cell, room.characters()[0]))
+	return map
+
+func test_로비가_시간을_흘리면_모든_방의_배틀이_흐른다() -> void:
+	var lobby := Lobby.new()
+	var first_map := _room_in_battle_with_balloon(lobby, 11, 22, Vector2i(2, 11))
+	var second_map := _room_in_battle_with_balloon(lobby, 33, 44, Vector2i(4, 9))
+	var step := WaterBalloon.POP_AFTER_SECONDS * 0.4
+	lobby.tick(step)
+	lobby.tick(step)
+	assert_int(first_map.water_balloon_count()).is_equal(1)
+	assert_int(second_map.water_balloon_count()).is_equal(1)
+	lobby.tick(step)
+	lobby.tick(step)
+	assert_int(first_map.water_balloon_count()).is_equal(0)
+	assert_int(second_map.water_balloon_count()).is_equal(0)
+
+func test_배틀이_시작되지_않은_방에_시간을_흘려도_터지지_않는다() -> void:
+	var lobby := Lobby.new()
+	var room := _room_with_two_peers(lobby)
+	lobby.tick(1.0)
+	assert_that(room.get_battle()).is_null()

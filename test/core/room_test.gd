@@ -194,8 +194,8 @@ func test_배틀_스냅샷은_맵_위의_것과_참가자_명부를_담는다() 
 			},
 		],
 		"seats": [
-			{"number": 1, "is_npc": false, "color": Color.RED, "is_out": false},
-			{"number": 2, "is_npc": false, "color": Color.GREEN, "is_out": true},
+			{"number": 1, "is_npc": false, "color": Color.RED, "is_out": false, "peer_id": 11},
+			{"number": 2, "is_npc": false, "color": Color.GREEN, "is_out": true, "peer_id": 22},
 		],
 		"water_balloons": [{"cell": Vector2i(2, 11), "owner_number": 1}],
 		"water_streams": [{"cell": Vector2i(7, 3), "direction": Vector2i.UP, "position_type": "end"}],
@@ -228,3 +228,15 @@ func test_게임_시작_시_정해진_칸에_게임_아이템이_놓인다() -> 
 	assert_that(type_by_cell.get(Vector2i(5, 4))).is_equal(GameItem.INCREASE_WATER_BALLOON_COUNT)
 	assert_that(type_by_cell.get(Vector2i(11, 6))).is_equal(GameItem.INCREASE_WATER_STREAM_LENGTH)
 	assert_that(type_by_cell.get(Vector2i(9, 9))).is_equal(GameItem.INCREASE_SPEED)
+
+func test_배틀_명부는_자리마다_주인_피어를_알려준다() -> void:
+	var room := Room.new()
+	room.add_character(Character.new(Vector2i.ZERO, 0, Color.RED, 11))
+	room.add_character(Character.new(Vector2i.ZERO, 0, Color.GREEN, 22))
+	room.add_character(Character.new(Vector2i.ZERO, 0, Color.YELLOW, 11, true))
+	room.set_battle_mode(BattleMode.MONSTER)
+	room.game_start()
+	var peer_by_number := {}
+	for seat in room.battle_snapshot()["seats"]:
+		peer_by_number[seat["number"]] = seat["peer_id"]
+	assert_that(peer_by_number).is_equal({1: 11, 2: 22, 3: 11, 4: 0})

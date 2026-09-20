@@ -10,6 +10,12 @@ func _ready() -> void:
 	multiplayer.peer_connected.connect(on_peer_connected)
 	multiplayer.peer_disconnected.connect(on_peer_disconnected)
 
+func _process(delta: float) -> void:
+	tick(delta)
+
+func tick(delta: float) -> void:
+	lobby.tick(delta)
+
 func _create_peer() -> void:
 	var peer := WebSocketMultiplayerPeer.new()
 	var error := peer.create_server(PORT)

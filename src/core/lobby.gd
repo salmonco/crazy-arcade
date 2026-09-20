@@ -56,6 +56,10 @@ func leave_room(room_id: String, peer_id: int) -> bool:
 	room.remove_character(character)
 	return true
 
+func tick(delta: float) -> void:
+	for room in rooms:
+		room.tick(delta)
+
 func snapshot() -> Dictionary:
 	var rooms_snapshot: Array[Dictionary] = []
 	for room in rooms:
