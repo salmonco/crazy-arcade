@@ -66,7 +66,7 @@ func snapshot() -> Dictionary:
 		})
 	return { "rooms": rooms_snapshot }
 
-func screen_snapshot(peer_id: int) -> Dictionary:
+func snapshot_for(peer_id: int) -> Dictionary:
 	var character := find_character(peer_id)
 	if character == null:
 		return { "screen": null }

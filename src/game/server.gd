@@ -116,4 +116,4 @@ func _broadcast() -> void:
 	if multiplayer == null:
 		return
 	for peer_id in multiplayer.get_peers():
-		screen_changed.rpc_id(peer_id, lobby.screen_snapshot(peer_id))
+		screen_changed.rpc_id(peer_id, lobby.snapshot_for(peer_id))

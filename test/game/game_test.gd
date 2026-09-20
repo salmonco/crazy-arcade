@@ -30,32 +30,32 @@ func _request_create_room_and_enter_room() -> void:
 
 func _request_enter_room(room_id: String) -> void:
 	_server.enter_room(room_id, _game.peer_id)
-	# _game.screen_changed(_server.lobby.screen_snapshot(_game.peer_id))
+	# _game.screen_changed(_server.lobby.snapshot_for(_game.peer_id))
 	_game.lobby_changed(_server.lobby)
 
 func _request_leave_room(room_id: String) -> void:
 	_server.leave_room(room_id, _game.peer_id)
-	# _game.screen_changed(_server.lobby.screen_snapshot(_game.peer_id))
+	# _game.screen_changed(_server.lobby.snapshot_for(_game.peer_id))
 	_game.lobby_changed(_server.lobby)
 
 func _request_start_battle(room_id: String) -> void:
 	_server.start_battle(room_id)
-	# _game.screen_changed(_server.lobby.screen_snapshot(_game.peer_id))
+	# _game.screen_changed(_server.lobby.snapshot_for(_game.peer_id))
 	_game.lobby_changed(_server.lobby)
 
 func _request_finish_battle(room_id: String) -> void:
 	_server.finish_battle(room_id)
-	# _game.screen_changed(_server.lobby.screen_snapshot(_game.peer_id))
+	# _game.screen_changed(_server.lobby.snapshot_for(_game.peer_id))
 	_game.lobby_changed(_server.lobby)
 
 func _request_set_local_multi(room_id: String, enabled: bool) -> void:
 	_server.set_local_multi(room_id, enabled, _game.peer_id)
-	# _game.screen_changed(_server.lobby.screen_snapshot(_game.peer_id))
+	# _game.screen_changed(_server.lobby.snapshot_for(_game.peer_id))
 	_game.lobby_changed(_server.lobby)
 
 func _request_set_monster_mode(room_id: String, enabled: bool) -> void:
 	_server.set_monster_mode(room_id, enabled, _game.peer_id)
-	# _game.screen_changed(_server.lobby.screen_snapshot(_game.peer_id))
+	# _game.screen_changed(_server.lobby.snapshot_for(_game.peer_id))
 	_game.lobby_changed(_server.lobby)
 
 # 로비에서 방 입장
