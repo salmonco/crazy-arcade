@@ -51,6 +51,7 @@ func game_start() -> void:
 	for character in _characters:
 		character.continuous_position = Map.SEAT_START_CELLS[character.number - 1]
 		map.add_character(character)
+	_place_game_items(map)
 	_battle = Battle.new(map, battle_mode)
 
 func game_over() -> void:
@@ -108,6 +109,30 @@ func _npc() -> Npc:
 		if character is Npc:
 			return character
 	return null
+
+func _place_game_items(map: Map) -> void:
+	# 물풍선 아이템 배치
+	map.add_game_item(GameItem.INCREASE_WATER_BALLOON_COUNT, Vector2i(5, 4))
+	map.add_game_item(GameItem.INCREASE_WATER_BALLOON_COUNT, Vector2i(1, 7))
+	map.add_game_item(GameItem.INCREASE_WATER_BALLOON_COUNT, Vector2i(8, 5))
+	map.add_game_item(GameItem.INCREASE_WATER_BALLOON_COUNT, Vector2i(13, 12))
+	map.add_game_item(GameItem.INCREASE_WATER_BALLOON_COUNT, Vector2i(12, 6))
+	map.add_game_item(GameItem.INCREASE_WATER_BALLOON_COUNT, Vector2i(15, 1))
+	map.add_game_item(GameItem.INCREASE_WATER_BALLOON_COUNT, Vector2i(0, 11))
+	map.add_game_item(GameItem.INCREASE_WATER_BALLOON_COUNT, Vector2i(11, 11))
+	map.add_game_item(GameItem.INCREASE_WATER_BALLOON_COUNT, Vector2i(2, 2))
+	# 물줄기 아이템 배치
+	map.add_game_item(GameItem.INCREASE_WATER_STREAM_LENGTH, Vector2i(11, 6))
+	map.add_game_item(GameItem.INCREASE_WATER_STREAM_LENGTH, Vector2i(1, 3))
+	map.add_game_item(GameItem.INCREASE_WATER_STREAM_LENGTH, Vector2i(15, 13))
+	map.add_game_item(GameItem.INCREASE_WATER_STREAM_LENGTH, Vector2i(10, 9))
+	map.add_game_item(GameItem.INCREASE_WATER_STREAM_LENGTH, Vector2i(10, 0))
+	# 스피드 아이템 배치
+	map.add_game_item(GameItem.INCREASE_SPEED, Vector2i(9, 9))
+	map.add_game_item(GameItem.INCREASE_SPEED, Vector2i(5, 9))
+	map.add_game_item(GameItem.INCREASE_SPEED, Vector2i(8, 10))
+	map.add_game_item(GameItem.INCREASE_SPEED, Vector2i(14, 1))
+	map.add_game_item(GameItem.INCREASE_SPEED, Vector2i(0, 1))
 
 func snapshot(peer_id: int) -> Dictionary:
 	var seats_snapshot: Array[Dictionary] = []

@@ -51,7 +51,6 @@ func render(new_battle: Battle) -> void:
 	_render_characters()
 	first_character = _character_at_seat(1)
 	second_character = _character_at_seat(2)
-	_place_game_items()
 	_render_game_items()
 	_render_game_over_label()
 
@@ -74,21 +73,6 @@ func _character_at_seat(number: int) -> Character:
 		if character.number == number:
 			return character
 	return null
-
-func start_battle(mode: StringName) -> void:
-	var map := Map.new()
-	match mode:
-		BattleMode.MONSTER:
-			var monster := Npc.new(Vector2i(1, 6), 1, Team.MONSTER_COLOR)
-			var human := Character.new(Vector2i(13, 6), 2, Color.RED)
-			map.add_character(monster)
-			map.add_character(human)
-		BattleMode.LOCAL_MULTI:
-			var human1 := Character.new(Vector2i(1, 6), 1, Color.RED)
-			var human2 := Character.new(Vector2i(13, 6), 2, Color.BLUE)
-			map.add_character(human1)
-			map.add_character(human2)
-	render(Battle.new(map, mode))
 
 func handle_key_pressed(key: Key, location: KeyLocation = KEY_LOCATION_UNSPECIFIED) -> void:
 	var game_key := GameKey.from_key(key, location)
@@ -124,30 +108,6 @@ func tick(delta: float) -> void:
 	_render_game_over_label()
 	if battle.should_go_to_room:
 		game_over.emit()
-
-func _place_game_items() -> void:
-	# 물풍선 아이템 배치
-	battle.get_map().add_game_item(GameItem.INCREASE_WATER_BALLOON_COUNT, Vector2i(5, 4))
-	battle.get_map().add_game_item(GameItem.INCREASE_WATER_BALLOON_COUNT, Vector2i(1, 7))
-	battle.get_map().add_game_item(GameItem.INCREASE_WATER_BALLOON_COUNT, Vector2i(8, 5))
-	battle.get_map().add_game_item(GameItem.INCREASE_WATER_BALLOON_COUNT, Vector2i(13, 12))
-	battle.get_map().add_game_item(GameItem.INCREASE_WATER_BALLOON_COUNT, Vector2i(12, 6))
-	battle.get_map().add_game_item(GameItem.INCREASE_WATER_BALLOON_COUNT, Vector2i(15, 1))
-	battle.get_map().add_game_item(GameItem.INCREASE_WATER_BALLOON_COUNT, Vector2i(0, 11))
-	battle.get_map().add_game_item(GameItem.INCREASE_WATER_BALLOON_COUNT, Vector2i(11, 11))
-	battle.get_map().add_game_item(GameItem.INCREASE_WATER_BALLOON_COUNT, Vector2i(2, 2))
-	# 물줄기 아이템 배치
-	battle.get_map().add_game_item(GameItem.INCREASE_WATER_STREAM_LENGTH, Vector2i(11, 6))
-	battle.get_map().add_game_item(GameItem.INCREASE_WATER_STREAM_LENGTH, Vector2i(1, 3))
-	battle.get_map().add_game_item(GameItem.INCREASE_WATER_STREAM_LENGTH, Vector2i(15, 13))
-	battle.get_map().add_game_item(GameItem.INCREASE_WATER_STREAM_LENGTH, Vector2i(10, 9))
-	battle.get_map().add_game_item(GameItem.INCREASE_WATER_STREAM_LENGTH, Vector2i(10, 0))
-	# 스피드 아이템 배치
-	battle.get_map().add_game_item(GameItem.INCREASE_SPEED, Vector2i(9, 9))
-	battle.get_map().add_game_item(GameItem.INCREASE_SPEED, Vector2i(5, 9))
-	battle.get_map().add_game_item(GameItem.INCREASE_SPEED, Vector2i(8, 10))
-	battle.get_map().add_game_item(GameItem.INCREASE_SPEED, Vector2i(14, 1))
-	battle.get_map().add_game_item(GameItem.INCREASE_SPEED, Vector2i(0, 1))
 
 func _unhandled_input(event: InputEvent) -> void:
 	if event is InputEventKey and not event.is_echo():
