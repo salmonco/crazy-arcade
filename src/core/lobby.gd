@@ -65,3 +65,15 @@ func snapshot() -> Dictionary:
 			"mode": room.battle_mode
 		})
 	return { "rooms": rooms_snapshot }
+
+func screen_snapshot(peer_id: int) -> Dictionary:
+	var character := find_character(peer_id)
+	if character == null:
+		return { "screen": null }
+	var room := find_room(character.joined_room_id)
+	if room == null:
+		return { "screen": Screen.LOBBY, "lobby": snapshot() }
+	var is_playing_battle := room.get_battle() != null and not room.get_battle().is_finished
+	if is_playing_battle:
+		return { "screen": Screen.BATTLE, "battle": room.battle_snapshot() }
+	return { "screen": Screen.ROOM, "room": room.snapshot(peer_id) }

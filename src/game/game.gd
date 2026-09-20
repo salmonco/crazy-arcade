@@ -8,7 +8,7 @@ extends Node
 const URL := "ws://localhost:%d" % Server.PORT
 
 var peer_id: int
-var current_room: Room
+var current_room_id: String
 
 func _ready() -> void:
 	_create_peer()
@@ -61,22 +61,42 @@ func request_set_monster_mode(_room_id: String, _enabled: bool) -> void:
 	pass
 
 @rpc("authority", "call_remote", "reliable")
+func screen_changed(snapshot: Dictionary) -> void:
+	match snapshot["screen"]:
+		Screen.LOBBY:
+			lobby_view.visible = true
+			room_view.visible = false
+			battle_view.visible = false
+			lobby_view.render(snapshot["lobby"])
+		Screen.ROOM:
+			lobby_view.visible = false
+			room_view.visible = true
+			battle_view.visible = false
+			room_view.render(snapshot["room"])
+			current_room_id = snapshot["id"]
+		Screen.BATTLE:
+			lobby_view.visible = false
+			room_view.visible = false
+			battle_view.visible = true
+			battle_view.render(snapshot["battle"])
+
+@rpc("authority", "call_remote", "reliable")
 func lobby_changed(_lobby: Lobby) -> void:
-	lobby_view.render(_lobby)
+	lobby_view.render_original(_lobby)
 	var character := _lobby.find_character(peer_id)
 	if character == null:
 		return
 	var room := _lobby.find_room(character.joined_room_id)
 	if room == null:
-		current_room = null
+		current_room_id = ""
 		room_view.visible = false
 		lobby_view.visible = true
 		return
-	current_room = room
-	room_view.render(room)
+	current_room_id = room.id
+	room_view.render_original(room)
 	lobby_view.visible = false
 	if room.get_battle() != null and not room.get_battle().is_finished:
-		battle_view.render(current_room.get_battle())
+		battle_view.render(room.get_battle())
 		room_view.visible = false
 		battle_view.visible = true
 	else:
@@ -93,13 +113,13 @@ func leave_room(room_id: String) -> void:
 	request_leave_room.rpc_id(1, room_id)
 
 func start_battle() -> void:
-	request_start_battle.rpc_id(1, current_room.id)
+	request_start_battle.rpc_id(1, current_room_id)
 
 func finish_game() -> void:
-	request_finish_battle.rpc_id(1, current_room.id)
+	request_finish_battle.rpc_id(1, current_room_id)
 
 func set_local_multi(enabled: bool) -> void:
-	request_set_local_multi.rpc_id(1, current_room.id, enabled)
+	request_set_local_multi.rpc_id(1, current_room_id, enabled)
 
 func set_monster_mode(enabled: bool) -> void:
-	request_set_monster_mode.rpc_id(1, current_room.id, enabled)
+	request_set_monster_mode.rpc_id(1, current_room_id, enabled)

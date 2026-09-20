@@ -13,10 +13,16 @@ signal room_chosen(room_id: String)
 @onready var room_list: GridContainer = %RoomList
 @onready var create_room_button: Button = %CreateRoomButton
 
-func render(lobby: Lobby) -> void:
+func render(snapshot: Dictionary) -> void:
+	_clear_room_list()
+	var rooms: Array = snapshot["rooms"]
+	for room in rooms:
+		room_list.add_child(_create_room_entry(room))
+
+func render_original(lobby: Lobby) -> void:
 	_clear_room_list()
 	for room in lobby.rooms:
-		room_list.add_child(_create_room_entry(room))
+		room_list.add_child(_create_room_entry_original(room))
 
 func room_count() -> int:
 	return room_list.get_child_count()
@@ -29,7 +35,21 @@ func _clear_room_list() -> void:
 		room_list.remove_child(entry)
 		entry.queue_free()
 
-func _create_room_entry(room: Room) -> Button:
+func _create_room_entry(room: Dictionary) -> Button:
+	var entry := Button.new()
+	entry.theme_type_variation = &"RoomRow"
+	entry.alignment = HORIZONTAL_ALIGNMENT_LEFT
+	entry.custom_minimum_size = ENTRY_SIZE
+	entry.text = "방 %s\n%d / %d  ·  %s" % [
+		room["id"].substr(0, ROOM_ID_DIGITS),
+		room["character_count"],
+		Map.SEAT_START_CELLS.size(),
+		MODE_NAMES.get(room["mode"]),
+	]
+	entry.pressed.connect(room_chosen.emit.bind(room.id))
+	return entry
+
+func _create_room_entry_original(room: Room) -> Button:
 	var entry := Button.new()
 	entry.theme_type_variation = &"RoomRow"
 	entry.alignment = HORIZONTAL_ALIGNMENT_LEFT
