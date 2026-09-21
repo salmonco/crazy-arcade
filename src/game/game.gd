@@ -83,12 +83,6 @@ func screen_changed(snapshot: Dictionary) -> void:
 			battle_view.visible = true
 			battle_view.render(snapshot["battle"], peer_id)
 
-func move(number: int, direction: Vector2i) -> void:
-	request_move.rpc_id(1, number, direction)
-
-func place_water_balloon(number: int) -> void:
-	request_place_water_balloon.rpc_id(1, number)
-
 func create_room() -> void:
 	request_create_room.rpc_id(1)
 
@@ -106,3 +100,9 @@ func set_local_multi(enabled: bool) -> void:
 
 func set_monster_mode(enabled: bool) -> void:
 	request_set_monster_mode.rpc_id(1, enabled)
+
+func move(number: int, direction: Vector2i) -> void:
+	request_move.rpc_id(1, number, direction)
+
+func place_water_balloon(number: int) -> void:
+	request_place_water_balloon.rpc_id(1, number)
