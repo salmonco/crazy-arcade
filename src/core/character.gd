@@ -6,6 +6,7 @@ const SPEED_IN_BUBBLE := 1.0
 const WATER_BALLOON_COUNT := 1
 const WATER_STREAM_LENGTH := 1
 const FACING_DIRECTION := Vector2i.DOWN
+const HEADING_DIRECTION := Vector2i.ZERO
 
 # 스프라이트(64x96)를 offset(0,-32)로 그린 결과라 아트가 바뀌면 같이 바뀐다.
 const FEET_FROM_ANCHOR := 0.5
@@ -24,8 +25,8 @@ var id: int
 var continuous_position: Vector2
 var is_out: bool = false
 var bubble: Bubble = null
-var facing: Vector2i = FACING_DIRECTION
-var heading: Vector2i = Vector2i.ZERO # 이동 방향
+var facing: Vector2i = FACING_DIRECTION # 마지막으로 0이 아니었던 heading
+var heading: Vector2i = HEADING_DIRECTION # 이동 방향
 var number: int
 var color: Color
 
@@ -44,12 +45,13 @@ func _init(start_position: Vector2i, seat_number: int = 0, team_color: Color = C
 	is_2p = _is_2p
 
 func init_player() -> void:
-	speed = Character.SPEED
-	max_water_balloon_count = Character.WATER_BALLOON_COUNT
-	max_water_stream_length = Character.WATER_STREAM_LENGTH
+	speed = SPEED
+	max_water_balloon_count = WATER_BALLOON_COUNT
+	max_water_stream_length = WATER_STREAM_LENGTH
 	bubble = null
-	facing = Character.FACING_DIRECTION
+	facing = FACING_DIRECTION
 	is_out = false
+	heading = HEADING_DIRECTION
 
 func move(direction: Vector2i, delta: float, water_balloon_positions: Array[Vector2i]) -> bool:
 	if direction != Vector2i.ZERO:

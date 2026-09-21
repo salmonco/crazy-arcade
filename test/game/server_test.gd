@@ -213,3 +213,23 @@ func test_방에_없는_피어의_방_요청은_아무_일도_일으키지_않�
 	assert_that(room.get_battle()).is_null()
 	assert_array(room.characters()).is_empty()
 	assert_that(room.battle_mode).is_equal(BattleMode.LOCAL_MULTI)
+
+func test_배틀_중인_방_사람에게_프레임을_보낸다() -> void:
+	_battle_room_with_two_peers()
+	assert_array(_server.tick(0.1, [11, 22])).contains([11, 22])
+
+func test_배틀이_없는_방_사람에게는_보내지_않는다() -> void:
+	var room := _server.create_room()
+	_server.on_peer_connected(11)
+	_server.enter_room(room.id, 11)
+	assert_array(_server.tick(0.1, [11])).is_empty()
+
+func test_배틀이_끝나는_프레임에도_그_방_사람에게_보낸다() -> void:
+	var room := _battle_room_with_two_peers()
+	room.get_battle().get_map().let_character_out(room.characters()[1])
+	var step := Battle.GAME_OVER_AFTER_SECOND * 0.6
+	_server.tick(step)
+	_server.tick(step)
+	assert_array(_server.tick(step, [11])).is_equal([11])
+	assert_that(room.get_battle()).is_null()
+	assert_that(_server.lobby.snapshot_for(11)["screen"]).is_equal(Screen.ROOM)

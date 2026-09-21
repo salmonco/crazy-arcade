@@ -260,8 +260,8 @@ func _sync() -> void:
 	_game.screen_changed(_server.lobby.snapshot_for(_game.peer_id))
 
 func _server_tick(delta: float) -> void:
-	_server.tick(delta)
-	_sync()
+	for peer_id in _server.tick(delta, [_game.peer_id]):
+		_game.screen_changed(_server.lobby.snapshot_for(peer_id))
 
 func _current_room() -> Room:
 	return _server.lobby.room_of(_game.peer_id)

@@ -11,11 +11,12 @@ func _ready() -> void:
 	multiplayer.peer_disconnected.connect(on_peer_disconnected)
 
 func _process(delta: float) -> void:
-	tick(delta)
+	_send(tick(delta, _connected_peers()))
 
-func tick(delta: float) -> void:
+func tick(delta: float, peer_ids: Array = []) -> Array:
+	var battle_rooms := lobby.rooms_in_battle()
 	lobby.tick(delta)
-	_broadcast(Screen.BATTLE)
+	return peers_in_rooms(peer_ids, battle_rooms)
 
 func _create_peer() -> void:
 	var peer := WebSocketMultiplayerPeer.new()
@@ -145,11 +146,21 @@ func place_water_balloon(number: int, peer_id: int) -> void:
 func _second_player_color(battle_mode: StringName) -> Color:
 	return Team.PLAYER_COLOR if battle_mode == BattleMode.MONSTER else Team.SECOND_PLAYER_COLOR
 
-func _broadcast(only_screen: StringName = &"") -> void:
-	if multiplayer == null or multiplayer.get_peers().is_empty():
-		return
-	for peer_id in multiplayer.get_peers():
-		var snapshot := lobby.snapshot_for(peer_id)
-		if only_screen != &"" and snapshot["screen"] != only_screen:
-			continue
-		screen_changed.rpc_id(peer_id, snapshot)
+func peers_in_rooms(peer_ids: Array, rooms: Array) -> Array:
+	var found: Array = []
+	for peer_id in peer_ids:
+		if lobby.room_of(peer_id) in rooms:
+			found.append(peer_id)
+	return found
+
+func _connected_peers() -> Array:
+	if multiplayer == null:
+		return []
+	return Array(multiplayer.get_peers())
+
+func _broadcast() -> void:
+	_send(_connected_peers())
+
+func _send(peer_ids: Array) -> void:
+	for peer_id in peer_ids:
+		screen_changed.rpc_id(peer_id, lobby.snapshot_for(peer_id))

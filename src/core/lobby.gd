@@ -62,6 +62,13 @@ func tick(delta: float) -> void:
 	for room in rooms:
 		room.tick(delta)
 
+func rooms_in_battle() -> Array[Room]:
+	var running: Array[Room] = []
+	for room in rooms:
+		if room.get_battle() != null:
+			running.append(room)
+	return running
+
 func snapshot() -> Dictionary:
 	var rooms_snapshot: Array[Dictionary] = []
 	for room in rooms:

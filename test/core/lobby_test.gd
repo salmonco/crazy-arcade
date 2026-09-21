@@ -211,3 +211,19 @@ func test_배틀이_시작되지_않은_방에_시간을_흘려도_터지지_않
 	var room := _room_with_two_peers(lobby)
 	lobby.tick(1.0)
 	assert_that(room.get_battle()).is_null()
+
+func test_배틀_중인_방만_고른다() -> void:
+	var lobby := Lobby.new()
+	var idle := lobby.create_room()
+	var playing := _room_with_two_peers(lobby)
+	playing.game_start()
+	assert_array(lobby.rooms_in_battle()).is_equal([playing])
+	assert_that(idle.get_battle()).is_null()
+
+func test_배틀이_끝나면_그_방은_목록에서_빠진다() -> void:
+	var lobby := Lobby.new()
+	var room := _room_with_two_peers(lobby)
+	room.game_start()
+	assert_int(lobby.rooms_in_battle().size()).is_equal(1)
+	room.game_over()
+	assert_array(lobby.rooms_in_battle()).is_empty()
