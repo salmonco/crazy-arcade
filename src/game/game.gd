@@ -41,23 +41,31 @@ func request_enter_room(_room_id: String) -> void:
 	pass
 
 @rpc("any_peer", "call_remote", "reliable")
-func request_leave_room(_room_id: String) -> void:
+func request_leave_room() -> void:
 	pass
 
 @rpc("any_peer", "call_remote", "reliable")
-func request_start_battle(_room_id: String) -> void:
+func request_start_battle() -> void:
 	pass
 
 @rpc("any_peer", "call_remote", "reliable")
-func request_finish_battle(_room_id: String) -> void:
+func request_finish_battle() -> void:
 	pass
 
 @rpc("any_peer", "call_remote", "reliable")
-func request_set_local_multi(_room_id: String, _enabled: bool) -> void:
+func request_set_local_multi(_enabled: bool) -> void:
 	pass
 
 @rpc("any_peer", "call_remote", "reliable")
-func request_set_monster_mode(_room_id: String, _enabled: bool) -> void:
+func request_set_monster_mode(_enabled: bool) -> void:
+	pass
+
+@rpc("any_peer", "call_remote", "reliable")
+func request_move(_number: int, _direction: Vector2i) -> void:
+	pass
+
+@rpc("any_peer", "call_remote", "reliable")
+func request_place_water_balloon(_number: int) -> void:
 	pass
 
 @rpc("authority", "call_remote", "reliable")
@@ -73,7 +81,7 @@ func screen_changed(snapshot: Dictionary) -> void:
 			room_view.visible = true
 			battle_view.visible = false
 			room_view.render(snapshot["room"])
-			current_room_id = snapshot["id"]
+			current_room_id = snapshot["room"]["id"]
 		Screen.BATTLE:
 			lobby_view.visible = false
 			room_view.visible = false
@@ -103,23 +111,29 @@ func lobby_changed(_lobby: Lobby) -> void:
 		room_view.visible = true
 		battle_view.visible = false
 
+func move(number: int, direction: Vector2i) -> void:
+	request_move.rpc_id(1, number, direction)
+
+func place_water_balloon(number: int) -> void:
+	request_place_water_balloon.rpc_id(1, number)
+
 func create_room() -> void:
 	request_create_room.rpc_id(1)
 
 func enter_room(room_id: String) -> void:
 	request_enter_room.rpc_id(1, room_id)
 
-func leave_room(room_id: String) -> void:
-	request_leave_room.rpc_id(1, room_id)
+func leave_room() -> void:
+	request_leave_room.rpc_id(1)
 
 func start_battle() -> void:
-	request_start_battle.rpc_id(1, current_room_id)
+	request_start_battle.rpc_id(1)
 
 func finish_game() -> void:
-	request_finish_battle.rpc_id(1, current_room_id)
+	request_finish_battle.rpc_id(1)
 
 func set_local_multi(enabled: bool) -> void:
-	request_set_local_multi.rpc_id(1, current_room_id, enabled)
+	request_set_local_multi.rpc_id(1, enabled)
 
 func set_monster_mode(enabled: bool) -> void:
-	request_set_monster_mode.rpc_id(1, current_room_id, enabled)
+	request_set_monster_mode.rpc_id(1, enabled)

@@ -185,7 +185,6 @@ func test_배틀_스냅샷은_맵_위의_것과_참가자_명부를_담는다() 
 	var expected_game_items: Array[Dictionary] = []
 	for game_item in room.get_battle().get_map().game_items():
 		expected_game_items.append({"cell": game_item.position, "type": game_item.type})
-
 	assert_that(room.battle_snapshot()).is_equal({
 		"characters": [
 			{
@@ -240,3 +239,58 @@ func test_배틀_명부는_자리마다_주인_피어를_알려준다() -> void:
 	for seat in room.battle_snapshot()["seats"]:
 		peer_by_number[seat["number"]] = seat["peer_id"]
 	assert_that(peer_by_number).is_equal({1: 11, 2: 22, 3: 11, 4: 0})
+
+# 입력
+func _room_in_battle_with_local_multi() -> Room:
+	var room := Room.new()
+	room.add_character(Character.new(Vector2i.ZERO, 0, Color.RED, 11))
+	room.add_character(Character.new(Vector2i.ZERO, 0, Color.GREEN, 22))
+	room.add_character(Character.new(Vector2i.ZERO, 0, Color.YELLOW, 11, true))
+	room.game_start()
+	return room
+
+func _seat(room: Room, number: int) -> Character:
+	for character in room.get_battle().get_map().characters():
+		if character.number == number:
+			return character
+	return null
+
+func test_배틀에서_내_캐릭터의_이동_방향을_바꾼다() -> void:
+	var room := _room_in_battle_with_local_multi()
+	assert_bool(room.set_heading(11, 1, Vector2i.UP)).is_true()
+	assert_that(_seat(room, 1).heading).is_equal(Vector2i.UP)
+
+func test_남의_캐릭터는_움직이지_못한다() -> void:
+	var room := _room_in_battle_with_local_multi()
+	assert_bool(room.set_heading(11, 2, Vector2i.UP)).is_false()
+	assert_that(_seat(room, 2).heading).is_equal(Vector2i.ZERO)
+
+func test_보내는_피어가_바뀌면_그_피어의_캐릭터가_움직인다() -> void:
+	var room := _room_in_battle_with_local_multi()
+	assert_bool(room.set_heading(22, 2, Vector2i.DOWN)).is_true()
+	assert_that(_seat(room, 2).heading).is_equal(Vector2i.DOWN)
+	assert_bool(room.set_heading(22, 1, Vector2i.DOWN)).is_false()
+	assert_that(_seat(room, 1).heading).is_equal(Vector2i.ZERO)
+
+func test_로컬_멀티에서는_한_피어가_두_캐릭터를_따로_움직인다() -> void:
+	var room := _room_in_battle_with_local_multi()
+	room.set_heading(11, 1, Vector2i.UP)
+	room.set_heading(11, 3, Vector2i.RIGHT)
+	assert_that(_seat(room, 1).heading).is_equal(Vector2i.UP)
+	assert_that(_seat(room, 3).heading).is_equal(Vector2i.RIGHT)
+
+func test_배틀에서_내_캐릭터가_물풍선을_놓는다() -> void:
+	var room := _room_in_battle_with_local_multi()
+	assert_bool(room.place_water_balloon(11, 1)).is_true()
+	assert_bool(room.get_battle().get_map().has_water_balloon(_seat(room, 1).position())).is_true()
+
+func test_남의_캐릭터로는_물풍선을_놓지_못한다() -> void:
+	var room := _room_in_battle_with_local_multi()
+	assert_bool(room.place_water_balloon(11, 2)).is_false()
+	assert_int(room.get_battle().get_map().water_balloon_count()).is_equal(0)
+
+func test_배틀이_시작되지_않았으면_입력을_받지_않는다() -> void:
+	var room := Room.new()
+	room.add_character(Character.new(Vector2i.ZERO, 0, Color.RED, 11))
+	assert_bool(room.set_heading(11, 1, Vector2i.UP)).is_false()
+	assert_bool(room.place_water_balloon(11, 1)).is_false()

@@ -54,6 +54,27 @@ func game_start() -> void:
 	_place_game_items(map)
 	_battle = Battle.new(map, battle_mode)
 
+func _character_in_battle(peer_id: int, number: int) -> Character:
+	if _battle == null:
+		return null
+	for character in _battle.get_map().characters():
+		if character.number == number and character.id == peer_id:
+			return character
+	return null
+
+func set_heading(peer_id: int, number: int, direction: Vector2i) -> bool:
+	var character := _character_in_battle(peer_id, number)
+	if character == null:
+		return false
+	character.heading = direction
+	return true
+
+func place_water_balloon(peer_id: int, number: int) -> bool:
+	var character := _character_in_battle(peer_id, number)
+	if character == null:
+		return false
+	return character.place_water_balloon(_battle.get_map())
+
 func tick(delta: float) -> void:
 	if _battle == null:
 		return

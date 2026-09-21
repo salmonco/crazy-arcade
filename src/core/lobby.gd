@@ -47,6 +47,8 @@ func enter_room(room_id: String, peer_id: int) -> bool:
 
 func leave_room(room_id: String, peer_id: int) -> bool:
 	var room := find_room(room_id)
+	if room == null:
+		return false
 	var character := find_character(peer_id)
 	if character == null:
 		return false
@@ -69,6 +71,12 @@ func snapshot() -> Dictionary:
 			"mode": room.battle_mode
 		})
 	return { "rooms": rooms_snapshot }
+
+func room_of(peer_id: int) -> Room:
+	var character := find_character(peer_id)
+	if character == null:
+		return null
+	return find_room(character.joined_room_id)
 
 func snapshot_for(peer_id: int) -> Dictionary:
 	var character := find_character(peer_id)

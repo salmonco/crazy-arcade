@@ -12,9 +12,9 @@ func before_test() -> void:
 	_game = _runner.scene()
 	_server = Server.new()
 	_on_connected_peer(47324)
-	_game.battle_view.game_over.connect(func() -> void: _request_finish_battle(_game.current_room_id))
-	_game.room_view.local_multi_check.toggled.connect(func(toggled_on: bool) -> void: _request_set_local_multi(_game.current_room_id, toggled_on))
-	_game.room_view.monster_mode_check.toggled.connect(func(toggled_on: bool) -> void: _request_set_monster_mode(_game.current_room_id, toggled_on))
+	_game.battle_view.game_over.connect(func() -> void: _request_finish_battle())
+	_game.room_view.local_multi_check.toggled.connect(func(toggled_on: bool) -> void: _request_set_local_multi(toggled_on))
+	_game.room_view.monster_mode_check.toggled.connect(func(toggled_on: bool) -> void: _request_set_monster_mode(toggled_on))
 
 func after_test() -> void:
 	_server.free()
@@ -33,28 +33,28 @@ func _request_enter_room(room_id: String) -> void:
 	# _game.screen_changed(_server.lobby.snapshot_for(_game.peer_id))
 	_game.lobby_changed(_server.lobby)
 
-func _request_leave_room(room_id: String) -> void:
-	_server.leave_room(room_id, _game.peer_id)
+func _request_leave_room() -> void:
+	_server.leave_room(_game.peer_id)
 	# _game.screen_changed(_server.lobby.snapshot_for(_game.peer_id))
 	_game.lobby_changed(_server.lobby)
 
-func _request_start_battle(room_id: String) -> void:
-	_server.start_battle(room_id)
+func _request_start_battle() -> void:
+	_server.start_battle(_game.peer_id)
 	# _game.screen_changed(_server.lobby.snapshot_for(_game.peer_id))
 	_game.lobby_changed(_server.lobby)
 
-func _request_finish_battle(room_id: String) -> void:
-	_server.finish_battle(room_id)
+func _request_finish_battle() -> void:
+	_server.finish_battle(_game.peer_id)
 	# _game.screen_changed(_server.lobby.snapshot_for(_game.peer_id))
 	_game.lobby_changed(_server.lobby)
 
-func _request_set_local_multi(room_id: String, enabled: bool) -> void:
-	_server.set_local_multi(room_id, enabled, _game.peer_id)
+func _request_set_local_multi(enabled: bool) -> void:
+	_server.set_local_multi(enabled, _game.peer_id)
 	# _game.screen_changed(_server.lobby.snapshot_for(_game.peer_id))
 	_game.lobby_changed(_server.lobby)
 
-func _request_set_monster_mode(room_id: String, enabled: bool) -> void:
-	_server.set_monster_mode(room_id, enabled, _game.peer_id)
+func _request_set_monster_mode(enabled: bool) -> void:
+	_server.set_monster_mode(enabled, _game.peer_id)
 	# _game.screen_changed(_server.lobby.snapshot_for(_game.peer_id))
 	_game.lobby_changed(_server.lobby)
 
@@ -76,7 +76,7 @@ func test_방을_만들면_만든_방에_들어가_있다() -> void:
 
 func test_방에서_나가면_로비_화면이_된다() -> void:
 	_request_create_room_and_enter_room()
-	_request_leave_room(_game.current_room_id)
+	_request_leave_room()
 	var current_room := _server.lobby.find_room(_game.current_room_id)
 	assert_that(current_room).is_null()
 	assert_bool(_game.lobby_view.visible).is_true()
@@ -85,7 +85,7 @@ func test_방에서_나가면_로비_화면이_된다() -> void:
 func test_방에서_나가도_방은_로비에_남는다() -> void:
 	_request_create_room_and_enter_room()
 	var left_room := _server.lobby.find_room(_game.current_room_id)
-	_request_leave_room(_game.current_room_id)
+	_request_leave_room()
 	_request_enter_room(left_room.id)
 	var current_room := _server.lobby.find_room(_game.current_room_id)
 	assert_that(current_room).is_equal(left_room)
@@ -136,20 +136,20 @@ func test_방에_있는_채로_다른_방에_들어가면_이전_방에서_빠�
 func test_방을_나갔다_다시_들어가도_내_캐릭터는_하나다() -> void:
 	_request_create_room_and_enter_room()
 	var room := _server.lobby.find_room(_game.current_room_id)
-	_request_leave_room(_game.current_room_id)
+	_request_leave_room()
 	_request_enter_room(room.id)
 	assert_int(_game.room_view.slot_count()).is_equal(1)
 
 # 배틀 모드 설정
 func test_몬스터_모드를_켜면_NPC_슬롯이_NPC로_그려진다() -> void:
 	_request_create_room_and_enter_room()
-	_request_set_monster_mode(_game.current_room_id, true)
+	_request_set_monster_mode(true)
 	assert_object(_game.room_view.slot(0).texture).is_equal(RoomView.PLAYER_SLOT_TEXTURE)
 	assert_object(_game.room_view.slot(1).texture).is_equal(RoomView.NPC_SLOT_TEXTURE)
 
 func test_로컬_멀티면_1P와_2P_슬롯이_다른_색으로_그려진다() -> void:
 	_request_create_room_and_enter_room()
-	_request_set_local_multi(_game.current_room_id, true)
+	_request_set_local_multi(true)
 	assert_that(_slot_color(0)).is_equal(_player_character.color)
 	var current_room := _server.lobby.find_room(_game.current_room_id)
 	assert_that(_slot_color(1)).is_equal(current_room.find_2p(_game.peer_id).color)
@@ -157,8 +157,8 @@ func test_로컬_멀티면_1P와_2P_슬롯이_다른_색으로_그려진다() ->
 
 func test_몬스터_모드면_사람_슬롯은_같은_색이고_NPC만_다른_색이다() -> void:
 	_request_create_room_and_enter_room()
-	_request_set_monster_mode(_game.current_room_id, true)
-	_request_set_local_multi(_game.current_room_id, true)
+	_request_set_monster_mode(true)
+	_request_set_local_multi(true)
 	var current_room := _server.lobby.find_room(_game.current_room_id)
 	var npc_index := 1 if current_room.characters()[1] is Npc else 2
 	var second_player_index := 2 if npc_index == 1 else 1
@@ -170,29 +170,29 @@ func _slot_color(index: int) -> Color:
 
 func test_로컬_멀티를_켜면_2P가_들어와_게임을_시작할_수_있다() -> void:
 	_request_create_room_and_enter_room()
-	_request_set_local_multi(_game.current_room_id, true)
+	_request_set_local_multi(true)
 	assert_int(_game.room_view.slot_count()).is_equal(2)
 	assert_bool(_game.room_view.start_button.disabled).is_false()
 
 func test_로컬_멀티를_끄면_2P가_방에서_빠진다() -> void:
 	_request_create_room_and_enter_room()
-	_request_set_local_multi(_game.current_room_id, true)
-	_request_set_local_multi(_game.current_room_id, false)
+	_request_set_local_multi(true)
+	_request_set_local_multi(false)
 	var current_room := _server.lobby.find_room(_game.current_room_id)
 	assert_array(current_room.characters()).is_equal([_player_character])
 	assert_int(_game.room_view.slot_count()).is_equal(1)
 
 func test_로컬_멀티를_두_번_켜도_2P는_하나다() -> void:
 	_request_create_room_and_enter_room()
-	_request_set_local_multi(_game.current_room_id, true)
-	_request_set_local_multi(_game.current_room_id, true)
+	_request_set_local_multi(true)
+	_request_set_local_multi(true)
 	assert_int(_game.room_view.slot_count()).is_equal(2)
 
 func test_방에서_나가면_2P도_방에서_빠진다() -> void:
 	_request_create_room_and_enter_room()
 	var room := _server.lobby.find_room(_game.current_room_id)
-	_request_set_local_multi(_game.current_room_id, true)
-	_request_leave_room(_game.current_room_id)
+	_request_set_local_multi(true)
+	_request_leave_room()
 	assert_array(room.characters()).is_empty()
 
 func test_방의_로컬_멀티_체크가_2P_추가에_연결되어_있다() -> void:
@@ -200,19 +200,19 @@ func test_방의_로컬_멀티_체크가_2P_추가에_연결되어_있다() -> v
 
 func test_몬스터_모드를_켜면_2P가_나와_같은_팀이_된다() -> void:
 	_request_create_room_and_enter_room()
-	_request_set_local_multi(_game.current_room_id, true)
+	_request_set_local_multi(true)
 	var current_room := _server.lobby.find_room(_game.current_room_id)
 	assert_int(current_room.team_count()).is_equal(2)
-	_request_set_monster_mode(_game.current_room_id, true)
+	_request_set_monster_mode(true)
 	var second_player := current_room.find_2p(_game.peer_id)
 	assert_that(second_player.color).is_equal(_player_character.color)
 	assert_int(current_room.team_count()).is_equal(2)
 
 func test_몬스터_모드를_끄면_2P가_다시_다른_팀이_된다() -> void:
 	_request_create_room_and_enter_room()
-	_request_set_local_multi(_game.current_room_id, true)
-	_request_set_monster_mode(_game.current_room_id, true)
-	_request_set_monster_mode(_game.current_room_id, false)
+	_request_set_local_multi(true)
+	_request_set_monster_mode(true)
+	_request_set_monster_mode(false)
 	var current_room := _server.lobby.find_room(_game.current_room_id)
 	var second_player := current_room.find_2p(_game.peer_id)
 	assert_that(second_player.color).is_not_equal(_player_character.color)
@@ -220,8 +220,8 @@ func test_몬스터_모드를_끄면_2P가_다시_다른_팀이_된다() -> void
 
 func test_몬스터_모드에서_켠_로컬_멀티의_2P도_나와_같은_팀이다() -> void:
 	_request_create_room_and_enter_room()
-	_request_set_monster_mode(_game.current_room_id, true)
-	_request_set_local_multi(_game.current_room_id, true)
+	_request_set_monster_mode(true)
+	_request_set_local_multi(true)
 	var current_room := _server.lobby.find_room(_game.current_room_id)
 	var second_player := current_room.find_2p(_game.peer_id)
 	assert_that(second_player.color).is_equal(_player_character.color)
@@ -230,15 +230,15 @@ func test_몬스터_모드에서_켠_로컬_멀티의_2P도_나와_같은_팀이
 func test_방에서_몬스터_모드를_켜면_NPC가_슬롯에_늘어난다() -> void:
 	_request_create_room_and_enter_room()
 	assert_int(_game.room_view.slot_count()).is_equal(1)
-	_request_set_monster_mode(_game.current_room_id, true)
+	_request_set_monster_mode(true)
 	var current_room := _server.lobby.find_room(_game.current_room_id)
 	assert_str(current_room.battle_mode).is_equal(BattleMode.MONSTER)
 	assert_int(_game.room_view.slot_count()).is_equal(2)
 
 func test_방에서_몬스터_모드를_끄면_NPC가_슬롯에서_빠진다() -> void:
 	_request_create_room_and_enter_room()
-	_request_set_monster_mode(_game.current_room_id, true)
-	_request_set_monster_mode(_game.current_room_id, false)
+	_request_set_monster_mode(true)
+	_request_set_monster_mode(false)
 	var current_room := _server.lobby.find_room(_game.current_room_id)
 	assert_str(current_room.battle_mode).is_equal(BattleMode.LOCAL_MULTI)
 	assert_int(_game.room_view.slot_count()).is_equal(1)
@@ -265,8 +265,8 @@ func test_몬스터_모드를_선택하고_로컬_멀티_모드를_선택해도_
 # 방에서 게임 시작
 func test_방에서_게임을_시작하면_배틀_화면이_된다() -> void:
 	_request_create_room_and_enter_room()
-	_request_set_monster_mode(_game.current_room_id, true)
-	_request_start_battle(_game.current_room_id)
+	_request_set_monster_mode(true)
+	_request_start_battle()
 	var current_room := _server.lobby.find_room(_game.current_room_id)
 	assert_that(_game.battle_view.battle).is_equal(current_room.get_battle())
 	assert_bool(_game.battle_view.visible).is_true()
@@ -335,14 +335,14 @@ func _npc_in_battle() -> Character:
 
 func _start_monster_battle_with_second_player() -> void:
 	_request_create_room_and_enter_room()
-	_request_set_monster_mode(_game.current_room_id, true)
-	_request_set_local_multi(_game.current_room_id, true)
-	_request_start_battle(_game.current_room_id)
+	_request_set_monster_mode(true)
+	_request_set_local_multi(true)
+	_request_start_battle()
 
 func _start_monster_battle() -> void:
 	_request_create_room_and_enter_room()
-	_request_set_monster_mode(_game.current_room_id, true)
-	_request_start_battle(_game.current_room_id)
+	_request_set_monster_mode(true)
+	_request_start_battle()
 
 func test_방의_시작_버튼이_게임_시작에_연결되어_있다() -> void:
 	assert_bool(_game.room_view.start_button.pressed.is_connected(_game.start_battle)).is_true()
@@ -367,7 +367,7 @@ func test_다른_방에_들어가면_이전_방의_슬롯이_남지_않는다() 
 
 func _create_room_and_leave() -> void:
 	_request_create_room_and_enter_room()
-	_request_leave_room(_game.current_room_id)
+	_request_leave_room()
 
 func _room_with_characters(count: int) -> Room:
 	var room := _server.create_room()
@@ -500,5 +500,5 @@ func test_나_말고_다른_피어가_방에서_떠나도_방_화면은_유지�
 	_request_enter_room(room.id)
 	_server.enter_room(room.id, peer2_id)
 	assert_bool(_game.room_view.visible).is_true()
-	_server.leave_room(room.id, peer2_id)
+	_server.leave_room(peer2_id)
 	assert_bool(_game.room_view.visible).is_true()
