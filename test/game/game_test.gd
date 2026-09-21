@@ -27,6 +27,9 @@ func _on_connected_peer(id: int) -> void:
 	_game.peer_id = id
 	_player_character = _server.lobby.find_character(id)
 
+func _sync() -> void:
+	_game.screen_changed(_server.lobby.snapshot_for(_game.peer_id))
+
 func _request_create_room_and_enter_room() -> void:
 	var room := _server.create_room()
 	_request_enter_room(room.id)
@@ -256,9 +259,6 @@ func test_몬스터_모드를_선택하고_로컬_멀티_모드를_선택해도_
 	assert_int(second_player.number).is_equal(2)
 
 # 방에서 게임 시작
-func _sync() -> void:
-	_game.screen_changed(_server.lobby.snapshot_for(_game.peer_id))
-
 func _server_tick(delta: float) -> void:
 	for peer_id in _server.tick(delta, [_game.peer_id]):
 		_game.screen_changed(_server.lobby.snapshot_for(peer_id))
