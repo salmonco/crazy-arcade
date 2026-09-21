@@ -79,6 +79,8 @@ func tick(delta: float) -> void:
 	if _battle == null:
 		return
 	_battle.tick(delta)
+	if _battle.should_go_to_room:
+		game_over()
 
 func game_over() -> void:
 	for character in _characters:

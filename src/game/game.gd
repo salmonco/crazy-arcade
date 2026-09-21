@@ -8,7 +8,6 @@ extends Node
 const URL := "ws://localhost:%d" % Server.PORT
 
 var peer_id: int
-var current_room_id: String
 
 func _ready() -> void:
 	_create_peer()
@@ -18,7 +17,8 @@ func _ready() -> void:
 	room_view.monster_mode_check.toggled.connect(set_monster_mode)
 	room_view.start_button.pressed.connect(start_battle)
 	room_view.local_multi_check.toggled.connect(set_local_multi)
-	battle_view.game_over.connect(finish_game)
+	battle_view.move_requested.connect(move)
+	battle_view.water_balloon_requested.connect(place_water_balloon)
 	multiplayer.connected_to_server.connect(on_connected_to_server)
 
 func _create_peer() -> void:
@@ -46,10 +46,6 @@ func request_leave_room() -> void:
 
 @rpc("any_peer", "call_remote", "reliable")
 func request_start_battle() -> void:
-	pass
-
-@rpc("any_peer", "call_remote", "reliable")
-func request_finish_battle() -> void:
 	pass
 
 @rpc("any_peer", "call_remote", "reliable")
@@ -81,35 +77,11 @@ func screen_changed(snapshot: Dictionary) -> void:
 			room_view.visible = true
 			battle_view.visible = false
 			room_view.render(snapshot["room"])
-			current_room_id = snapshot["room"]["id"]
 		Screen.BATTLE:
 			lobby_view.visible = false
 			room_view.visible = false
 			battle_view.visible = true
-			battle_view.render(snapshot["battle"])
-
-@rpc("authority", "call_remote", "reliable")
-func lobby_changed(_lobby: Lobby) -> void:
-	lobby_view.render_original(_lobby)
-	var character := _lobby.find_character(peer_id)
-	if character == null:
-		return
-	var room := _lobby.find_room(character.joined_room_id)
-	if room == null:
-		current_room_id = ""
-		room_view.visible = false
-		lobby_view.visible = true
-		return
-	current_room_id = room.id
-	room_view.render_original(room)
-	lobby_view.visible = false
-	if room.get_battle() != null and not room.get_battle().is_finished:
-		battle_view.render(room.get_battle())
-		room_view.visible = false
-		battle_view.visible = true
-	else:
-		room_view.visible = true
-		battle_view.visible = false
+			battle_view.render(snapshot["battle"], peer_id)
 
 func move(number: int, direction: Vector2i) -> void:
 	request_move.rpc_id(1, number, direction)
@@ -128,9 +100,6 @@ func leave_room() -> void:
 
 func start_battle() -> void:
 	request_start_battle.rpc_id(1)
-
-func finish_game() -> void:
-	request_finish_battle.rpc_id(1)
 
 func set_local_multi(enabled: bool) -> void:
 	request_set_local_multi.rpc_id(1, enabled)

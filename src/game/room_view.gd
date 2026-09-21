@@ -31,19 +31,6 @@ func render(snapshot: Dictionary) -> void:
 	monster_mode_check.set_pressed_no_signal(snapshot["mode"] == BattleMode.MONSTER)
 	local_multi_check.set_pressed_no_signal(snapshot["local_multi_on"])
 
-func render_original(room: Room) -> void:
-	_clear_slots()
-	var characters := room.characters()
-	for seat in maxi(SEAT_COUNT, characters.size()):
-		if seat < characters.size():
-			slots.add_child(_create_slot_original(characters[seat]))
-		else:
-			slots.add_child(_create_empty_slot())
-	room_id_label.text = "방 %s" % room.id.substr(0, 8)
-	start_button.disabled = not room.can_game_start()
-	monster_mode_check.set_pressed_no_signal(room.battle_mode == BattleMode.MONSTER)
-	local_multi_check.set_pressed_no_signal(_human_count(room) > 1)
-
 func slot_count() -> int:
 	return _taken_cards().size()
 
@@ -135,50 +122,3 @@ func _create_empty_slot() -> Control:
 	label.add_theme_font_size_override("font_size", 20)
 	card.add_child(label)
 	return card
-
-func _create_slot_original(character: Character) -> Control:
-	var card := PanelContainer.new()
-	card.theme_type_variation = &"SlotCard"
-	card.custom_minimum_size = CARD_SIZE
-	card.set_meta("character", character)
-
-	var box := VBoxContainer.new()
-	box.name = "Box"
-	box.add_theme_constant_override("separation", 8)
-	card.add_child(box)
-	box.add_child(_create_portrait_original(character))
-	box.add_child(_create_name_plate_original(character))
-	return card
-
-func _create_portrait_original(character: Character) -> TextureRect:
-	var is_npc := character is Npc
-	var portrait := TextureRect.new()
-	portrait.name = "Portrait"
-	portrait.texture = NPC_SLOT_TEXTURE if is_npc else PLAYER_SLOT_TEXTURE
-	portrait.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
-	portrait.custom_minimum_size = PORTRAIT_SIZE
-	portrait.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
-
-	var recolor := ShaderMaterial.new()
-	recolor.shader = RECOLOR_SHADER
-	recolor.set_shader_parameter("color", character.color)
-	recolor.set_shader_parameter("mask_texture", NPC_SLOT_MASK if is_npc else PLAYER_SLOT_MASK)
-	portrait.material = recolor
-	return portrait
-
-func _create_name_plate_original(character: Character) -> PanelContainer:
-	var plate := PanelContainer.new()
-	var style := StyleBoxFlat.new()
-	style.bg_color = character.color
-	style.set_corner_radius_all(8)
-	style.content_margin_top = 3
-	style.content_margin_bottom = 3
-	plate.add_theme_stylebox_override("panel", style)
-
-	var label := Label.new()
-	label.text = "NPC" if character is Npc else "%dP" % character.number
-	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	label.add_theme_color_override("font_color", Color.WHITE)
-	label.add_theme_font_size_override("font_size", 22)
-	plate.add_child(label)
-	return plate

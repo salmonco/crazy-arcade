@@ -15,6 +15,7 @@ func _process(delta: float) -> void:
 
 func tick(delta: float) -> void:
 	lobby.tick(delta)
+	_broadcast(Screen.BATTLE)
 
 func _create_peer() -> void:
 	var peer := WebSocketMultiplayerPeer.new()
@@ -57,11 +58,6 @@ func request_leave_room() -> void:
 @rpc("any_peer", "call_remote", "reliable")
 func request_start_battle() -> void:
 	start_battle(multiplayer.get_remote_sender_id())
-	_broadcast()
-
-@rpc("any_peer", "call_remote", "reliable")
-func request_finish_battle() -> void:
-	finish_battle(multiplayer.get_remote_sender_id())
 	_broadcast()
 
 @rpc("any_peer", "call_remote", "reliable")
@@ -149,8 +145,11 @@ func place_water_balloon(number: int, peer_id: int) -> void:
 func _second_player_color(battle_mode: StringName) -> Color:
 	return Team.PLAYER_COLOR if battle_mode == BattleMode.MONSTER else Team.SECOND_PLAYER_COLOR
 
-func _broadcast() -> void:
-	if multiplayer == null:
+func _broadcast(only_screen: StringName = &"") -> void:
+	if multiplayer == null or multiplayer.get_peers().is_empty():
 		return
 	for peer_id in multiplayer.get_peers():
-		screen_changed.rpc_id(peer_id, lobby.snapshot_for(peer_id))
+		var snapshot := lobby.snapshot_for(peer_id)
+		if only_screen != &"" and snapshot["screen"] != only_screen:
+			continue
+		screen_changed.rpc_id(peer_id, snapshot)

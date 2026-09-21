@@ -18,6 +18,9 @@ var _game_items: Array[GameItem] = []
 static func to_pixel(cell: Vector2i) -> Vector2:
 	return Vector2(cell) * PIXELS_PER_CELL
 
+static func to_pixel_continuous(position: Vector2) -> Vector2:
+	return position * PIXELS_PER_CELL
+
 static func to_pixel_center(cell: Vector2i) -> Vector2:
 	return to_pixel(cell) + Vector2.ONE * (Map.PIXELS_PER_CELL / 2.0)
 

@@ -384,3 +384,7 @@ func test_NPC는_붙어_있는_적에게_물풍선을_놓는다() -> void:
 	assert_int(map.water_balloon_count()).is_equal(0)
 	map.tick(0.01)
 	assert_int(map.water_balloon_count()).is_equal(1)
+
+func test_칸_사이에_걸친_위치도_픽셀로_바꾼다() -> void:
+	assert_that(Map.to_pixel_continuous(Vector2(3.5, 5.0))).is_equal(Vector2(3.5, 5.0) * Map.PIXELS_PER_CELL)
+	assert_that(Map.to_pixel_continuous(Vector2(3, 5))).is_equal(Map.to_pixel(Vector2i(3, 5)))

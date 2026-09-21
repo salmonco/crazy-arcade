@@ -294,3 +294,38 @@ func test_배틀이_시작되지_않았으면_입력을_받지_않는다() -> vo
 	room.add_character(Character.new(Vector2i.ZERO, 0, Color.RED, 11))
 	assert_bool(room.set_heading(11, 1, Vector2i.UP)).is_false()
 	assert_bool(room.place_water_balloon(11, 1)).is_false()
+
+func test_배틀이_끝나면_방이_스스로_정리한다() -> void:
+	var room := Room.new()
+	room.add_character(Character.new(Vector2i.ZERO, 0, Color.RED, 11))
+	room.add_character(Character.new(Vector2i.ZERO, 0, Color.GREEN, 22))
+	room.game_start()
+	var loser := room.characters()[1]
+	room.get_battle().get_map().let_character_out(loser)
+	var step := Battle.GAME_OVER_AFTER_SECOND * 0.6
+	room.tick(step) # 승부 판정
+	room.tick(step)
+	assert_that(room.get_battle()).is_not_null()
+	room.tick(step)
+	assert_that(room.get_battle()).is_null()
+	assert_bool(loser.is_out).is_false()
+
+func test_배틀이_끝나면_캐릭터가_처음_상태로_돌아간다() -> void:
+	var room := Room.new()
+	var character := Character.new(Vector2i.ZERO, 0, Color.RED, 11)
+	room.add_character(character)
+	room.add_character(Character.new(Vector2i.ZERO, 0, Color.GREEN, 22))
+	room.game_start()
+	character.speed = 10.0
+	character.max_water_balloon_count = 5
+	character.max_water_stream_length = 5
+	character.trapped()
+	character.facing = Vector2i.LEFT
+	character.is_out = true
+	room.game_over()
+	assert_float(character.speed).is_equal(Character.SPEED)
+	assert_int(character.max_water_balloon_count).is_equal(Character.WATER_BALLOON_COUNT)
+	assert_int(character.max_water_stream_length).is_equal(Character.WATER_STREAM_LENGTH)
+	assert_bool(character.is_trapped()).is_false()
+	assert_that(character.facing).is_equal(Character.FACING_DIRECTION)
+	assert_bool(character.is_out).is_false()

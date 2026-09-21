@@ -1,6 +1,8 @@
 extends GdUnitTestSuite
 
 const SCENE_PATH := "res://scenes/battle_view.tscn"
+const MY_PEER := 11
+const OTHER_PEER := 22
 
 var _runner: GdUnitSceneRunner
 var _battle_view: BattleView
@@ -8,295 +10,177 @@ var _battle_view: BattleView
 func before_test() -> void:
 	_runner = scene_runner(SCENE_PATH)
 	_battle_view = _runner.scene()
-	_start_battle(BattleMode.LOCAL_MULTI)
 
-func _start_battle(mode: StringName) -> void:
-	var map := Map.new()
-	match mode:
-		BattleMode.MONSTER:
-			var monster := Npc.new(Vector2i(1, 6), 1, Team.MONSTER_COLOR)
-			var human := Character.new(Vector2i(13, 6), 2, Color.RED)
-			map.add_character(monster)
-			map.add_character(human)
-		BattleMode.LOCAL_MULTI:
-			var human1 := Character.new(Vector2i(1, 6), 1, Color.RED)
-			var human2 := Character.new(Vector2i(13, 6), 2, Color.BLUE)
-			map.add_character(human1)
-			map.add_character(human2)
-	_battle_view.render(Battle.new(map, mode))
+func _seat(number: int, color: Color, peer: int, is_npc := false, is_out := false) -> Dictionary:
+	return {"number": number, "is_npc": is_npc, "color": color, "is_out": is_out, "peer_id": peer}
 
-func test_씬을_띄우기만_하면_배틀이_시작되지_않는다() -> void:
-	var runner := scene_runner(SCENE_PATH)
-	var battle_view: BattleView = runner.scene()
-	assert_that(battle_view.battle).is_null()
+func _character(number: int, cell: Vector2, color: Color, is_npc := false) -> Dictionary:
+	return {
+		"number": number, "is_npc": is_npc, "cell": cell,
+		"color": color, "facing": Vector2i.DOWN, "is_trapped": false,
+	}
 
-func test_밖에서_만든_배틀을_받아_그린다() -> void:
-	var runner := scene_runner(SCENE_PATH)
-	var battle_view: BattleView = runner.scene()
-	var map := Map.new()
-	map.add_character(Character.new(Vector2i(3, 5), 1, Color.RED))
-	map.add_character(Character.new(Vector2i(9, 2), 2, Color.BLUE))
-	var battle := Battle.new(map, BattleMode.LOCAL_MULTI)
-	battle_view.render(battle)
-	assert_that(battle_view.battle).is_equal(battle)
-	assert_that(battle_view.first_character).is_equal(map.characters()[0])
-	assert_int(battle_view.view_by_character.size()).is_equal(2)
+func _solo_snapshot() -> Dictionary:
+	return {
+		"characters": [
+			_character(1, Vector2(3, 5), Color.RED),
+			_character(2, Vector2(9, 2), Team.MONSTER_COLOR, true),
+		],
+		"seats": [
+			_seat(1, Color.RED, MY_PEER),
+			_seat(2, Team.MONSTER_COLOR, 0, true),
+		],
+		"water_balloons": [], "water_streams": [], "game_items": [],
+		"winner_color": Color.BLACK, "is_draw": false,
+	}
 
-func test_1P와_2P를_맵에_들어간_순서가_아니라_자리_번호로_찾는다() -> void:
-	var runner := scene_runner(SCENE_PATH)
-	var battle_view: BattleView = runner.scene()
-	var map := Map.new()
-	map.add_character(Character.new(Vector2i(9, 2), 2, Color.BLUE))
-	map.add_character(Character.new(Vector2i(3, 5), 1, Color.RED))
-	battle_view.render(Battle.new(map, BattleMode.LOCAL_MULTI))
-	assert_int(battle_view.first_character.number).is_equal(1)
-	assert_int(battle_view.second_character.number).is_equal(2)
+func _local_multi_snapshot() -> Dictionary:
+	var snapshot := _solo_snapshot()
+	snapshot["characters"].append(_character(3, Vector2(7, 11), Color.GREEN))
+	snapshot["seats"].append(_seat(3, Color.GREEN, MY_PEER))
+	return snapshot
 
-func test_배틀_화면을_숨기면_승패_라벨도_숨는다() -> void:
-	_battle_view.win_label.visible = true
-	_battle_view.visible = false
-	assert_bool(_battle_view.win_label.is_visible_in_tree()).is_false()
-	_battle_view.visible = true
-	assert_bool(_battle_view.win_label.is_visible_in_tree()).is_true()
+func _render(snapshot: Dictionary, peer := MY_PEER) -> void:
+	_battle_view.render(snapshot, peer)
 
-func test_배틀이_없으면_tick해도_아무_일도_일어나지_않는다() -> void:
-	var runner := scene_runner(SCENE_PATH)
-	var battle_view: BattleView = runner.scene()
-	battle_view.tick(4.0)
-	assert_that(battle_view.battle).is_null()
+func test_스냅샷의_캐릭터마다_뷰를_만든다() -> void:
+	_render(_solo_snapshot())
+	assert_int(_battle_view.view_by_character_number.size()).is_equal(2)
+	assert_that(_battle_view.view_by_character_number[1].position).is_equal(Map.to_pixel_continuous(Vector2(3, 5)))
+	assert_that(_battle_view.view_by_character_number[2].position).is_equal(Map.to_pixel_continuous(Vector2(9, 2)))
 
-# 캐릭터 이동
-func test_시작_시_캐릭터가_맵의_시작_칸에_위치한다() -> void:
-	var view: CharacterView = _battle_view.view_by_character[_battle_view.second_character]
-	assert_vector(view.position).is_equal(_battle_view.second_character.pixel_position())
+func test_다시_그려도_같은_자리의_뷰는_살아남는다() -> void:
+	_render(_solo_snapshot())
+	var before_view: CharacterView = _battle_view.view_by_character_number[1]
+	var moved := _solo_snapshot()
+	moved["characters"][0]["cell"] = Vector2(4, 5)
+	_render(moved)
+	assert_that(_battle_view.view_by_character_number[1]).is_same(before_view)
+	assert_that(_battle_view.view_by_character_number[1].position).is_equal(Map.to_pixel_continuous(Vector2(4, 5)))
 
-func test_캐릭터가_이동하면_뷰가_새_칸을_따라온다() -> void:
-	var start_cell := _battle_view.second_character.position()
-	_battle_view.second_character.move(Vector2i.RIGHT, 0.25, [])
-	_battle_view.tick(0.25)
-	var moved_cell := _battle_view.second_character.position()
-	assert_vector(moved_cell).is_not_equal(start_cell)
-	var view: CharacterView = _battle_view.view_by_character[_battle_view.second_character]
-	assert_vector(view.position).is_equal(Map.to_pixel(moved_cell))
+func test_목록에서_사라진_캐릭터의_뷰는_지운다() -> void:
+	_render(_solo_snapshot())
+	var without_npc := _solo_snapshot()
+	without_npc["characters"].remove_at(1)
+	_render(without_npc)
+	assert_int(_battle_view.view_by_character_number.size()).is_equal(1)
+	assert_bool(_battle_view.view_by_character_number.has(2)).is_false()
 
-func test_키보드_방향키_입력을_떼면_캐릭터가_이동하지_않는다() -> void:
-	var start_cell := _battle_view.second_character.position()
-	var view: CharacterView = _battle_view.view_by_character[_battle_view.second_character]
-	_battle_view.handle_key_pressed(KEY_LEFT)
-	_battle_view.tick(0.25)
-	_battle_view.handle_key_released(KEY_LEFT)
-	_battle_view.tick(0.25)
-	assert_vector(view.position).is_equal(Map.to_pixel(start_cell + Vector2i.LEFT))
-
-func test_캐릭터는_방향을_바꿔도_연속으로_이동할_수_있다() -> void:
-	var start_cell := _battle_view.second_character.position()
-	var view: CharacterView = _battle_view.view_by_character[_battle_view.second_character]
-	_battle_view.handle_key_pressed(KEY_LEFT)
-	_battle_view.tick(0.25)
-	_battle_view.handle_key_pressed(KEY_DOWN)
-	_battle_view.tick(0.25)
-	_battle_view.handle_key_released(KEY_LEFT)
-	_battle_view.tick(0.25)
-	assert_vector(view.position).is_equal(Map.to_pixel(start_cell + Vector2i.LEFT + Vector2i.DOWN * 2))
-
-# 물풍선 놓기
-func test_키보드_스페이스_바를_누르면_캐릭터가_물풍선을_놓는다() -> void:
-	_start_battle(BattleMode.MONSTER)
-	_battle_view.handle_key_pressed(KEY_SPACE)
-	_battle_view.tick(0.1)
+func test_물풍선은_놓은_자리에_따라_다른_텍스쳐다() -> void:
+	var snapshot := _local_multi_snapshot()
+	snapshot["water_balloons"] = [
+		{"cell": Vector2i(1, 6), "owner_number": 1},
+		{"cell": Vector2i(4, 9), "owner_number": 3},
+		{"cell": Vector2i(8, 2), "owner_number": 2},
+	]
+	_render(snapshot)
 	var views := _battle_view.water_balloon_views.get_children()
-	assert_vector((views[0] as Sprite2D).position).is_equal(_battle_view.second_character.pixel_position())
+	assert_int(views.size()).is_equal(3)
+	assert_object(views[0].texture).is_equal(BattleView.PLAYER_WATER_BALLOON_TEXTURE)
+	assert_object(views[1].texture).is_equal(BattleView.SECOND_PLAYER_WATER_BALLOON_TEXTURE)
+	assert_object(views[2].texture).is_equal(BattleView.NPC_WATER_BALLOON_TEXTURE)
+	assert_that(views[0].position).is_equal(Map.to_pixel(Vector2i(1, 6)))
 
-func test_서로_다른_두_칸에_물풍선을_놓으면_물풍선이_두_개_그려진다() -> void:
-	_start_battle(BattleMode.MONSTER)
-	_battle_view.handle_key_pressed(KEY_SPACE)
-	_battle_view.tick(0.1)
-	_battle_view.second_character.move(Vector2i.RIGHT, 0.25, [])
-	_battle_view.second_character.get_game_item(GameItem.INCREASE_WATER_BALLOON_COUNT)
-	_battle_view.handle_key_pressed(KEY_SPACE)
-	_battle_view.tick(0.1)
-	assert_int(_battle_view.water_balloon_views.get_child_count()).is_equal(2)
+func test_물줄기는_방향에_맞게_돌려_그린다() -> void:
+	var snapshot := _solo_snapshot()
+	snapshot["water_streams"] = [
+		{"cell": Vector2i(3, 5), "direction": Vector2i.ZERO, "position_type": "center"},
+		{"cell": Vector2i(3, 4), "direction": Vector2i.UP, "position_type": "end"},
+		{"cell": Vector2i(4, 5), "direction": Vector2i.RIGHT, "position_type": "straight"},
+	]
+	_render(snapshot)
+	var views := _battle_view.water_stream_views.get_children()
+	assert_int(views.size()).is_equal(3)
+	assert_object(views[0].texture).is_equal(BattleView.WATER_STREAM_TEXTURES["center"])
+	assert_float(views[1].rotation_degrees).is_equal(0.0)
+	assert_float(views[2].rotation_degrees).is_equal(90.0)
 
-# 물풍선 터지기
-func test_시간이_다_지나면_물풍선이_화면에서_사라진다() -> void:
-	_start_battle(BattleMode.LOCAL_MULTI)
-	_battle_view.handle_key_pressed(KEY_SHIFT, KEY_LOCATION_RIGHT)
-	_battle_view.tick(0.1)
-	assert_int(_battle_view.water_balloon_views.get_child_count()).is_equal(1)
-	_battle_view.tick(WaterBalloon.POP_AFTER_SECONDS * 1.5)
-	assert_int(_battle_view.water_balloon_views.get_child_count()).is_equal(0)
+func test_게임_아이템은_종류에_맞는_텍스쳐다() -> void:
+	var snapshot := _solo_snapshot()
+	snapshot["game_items"] = [
+		{"cell": Vector2i(5, 4), "type": GameItem.INCREASE_WATER_BALLOON_COUNT},
+		{"cell": Vector2i(9, 9), "type": GameItem.INCREASE_SPEED},
+	]
+	_render(snapshot)
+	var views := _battle_view.game_item_views.get_children()
+	assert_object(views[0].texture).is_equal(BattleView.GAME_ITEM_WATER_BALLOON_TEXTURE)
+	assert_object(views[1].texture).is_equal(BattleView.GAME_ITEM_SPEED_TEXTURE)
 
-func test_시간이_다_지나지_않으면_물풍선이_화면에서_사라지지_않는다() -> void:
-	_start_battle(BattleMode.LOCAL_MULTI)
-	_battle_view.handle_key_pressed(KEY_SHIFT, KEY_LOCATION_RIGHT)
-	_battle_view.tick(0.1)
-	assert_int(_battle_view.water_balloon_views.get_child_count()).is_equal(1)
-	_battle_view.tick(WaterBalloon.POP_AFTER_SECONDS * 0.5)
-	assert_int(_battle_view.water_balloon_views.get_child_count()).is_equal(1)
-
-# 물줄기 보이기
-func test_물풍선_하나가_터질_때_물줄기가_5칸_보인다() -> void:
-	_start_battle(BattleMode.MONSTER)
-	_battle_view.handle_key_pressed(KEY_SPACE)
-	_battle_view.tick(WaterBalloon.POP_AFTER_SECONDS)
-	assert_int(_battle_view.water_stream_views.get_child_count()).is_equal(5)
-
-func test_물줄기_방향에_맞는_텍스쳐가_보인다() -> void:
-	_start_battle(BattleMode.MONSTER)
-	_battle_view.handle_key_pressed(KEY_SPACE)
-	_battle_view.tick(WaterBalloon.POP_AFTER_SECONDS)
-	var cells := {}
-	for view: Sprite2D in _battle_view.water_stream_views.get_children():
-		cells[view.position] = view.texture
-	var center_cell := _battle_view.second_character.position()
-	assert_that(cells[Map.to_pixel_center(center_cell)]).is_equal(_battle_view.WATER_STREAM_TEXTURES["center"])
-	assert_that(cells[Map.to_pixel_center(center_cell + Vector2i.UP)]).is_equal(_battle_view.WATER_STREAM_TEXTURES["end"])
-	assert_that(cells[Map.to_pixel_center(center_cell + Vector2i.DOWN)]).is_equal(_battle_view.WATER_STREAM_TEXTURES["end"])
-	assert_that(cells[Map.to_pixel_center(center_cell + Vector2i.LEFT)]).is_equal(_battle_view.WATER_STREAM_TEXTURES["end"])
-	assert_that(cells[Map.to_pixel_center(center_cell + Vector2i.RIGHT)]).is_equal(_battle_view.WATER_STREAM_TEXTURES["end"])
-
-# 물방울에 갇힘
-func test_캐릭터는_물줄기를_맞으면_물방울에_갇혀_보인다() -> void:
-	_start_battle(BattleMode.MONSTER)
-	_battle_view.handle_key_pressed(KEY_SPACE)
-	_battle_view.tick(WaterBalloon.POP_AFTER_SECONDS)
-	var view: CharacterView = _battle_view.view_by_character[_battle_view.second_character]
-	assert_str(view.animation).is_equal("bubble")
-
-# 자동 아웃
-func test_아웃된_캐릭터는_화면에서_사라진다() -> void:
-	var original_count = _battle_view.character_views.get_child_count()
-	_battle_view.battle.get_map().let_character_out(_battle_view.second_character)
-	_battle_view.tick(0.1)
-	assert_int(_battle_view.character_views.get_child_count()).is_equal(original_count - 1)
-
-# 게임 오버
-func test_몬스터_모드에서_게임에서_지면_졌다는_텍스트가_표시된다() -> void:
-	_start_battle(BattleMode.MONSTER)
-	_battle_view.tick(0.1)
-	assert_bool(_battle_view.lose_label.visible).is_false()
-	assert_bool(_battle_view.win_label.visible).is_false()
-	assert_bool(_battle_view.draw_label.visible).is_false()
-	_battle_view.battle.get_map().let_character_out(_battle_view.second_character)
-	_battle_view.tick(0.1)
-	assert_bool(_battle_view.lose_label.visible).is_true()
-	assert_bool(_battle_view.win_label.visible).is_false()
-	assert_bool(_battle_view.draw_label.visible).is_false()
-	_battle_view.battle.get_map().let_character_out(_battle_view.first_character)
-	_battle_view.tick(0.1)
-	assert_bool(_battle_view.lose_label.visible).is_true()
-	assert_bool(_battle_view.win_label.visible).is_false()
-	assert_bool(_battle_view.draw_label.visible).is_false()
-
-func test_로컬멀티_모드에서_한_명이_이기면_해당_캐릭터가_이겼다는_텍스트가_표시된다() -> void:
-	_start_battle(BattleMode.LOCAL_MULTI)
-	_battle_view.tick(0.1)
-	assert_bool(_battle_view.win_label.visible).is_false()
-	assert_bool(_battle_view.lose_label.visible).is_false()
-	assert_bool(_battle_view.draw_label.visible).is_false()
-	_battle_view.battle.get_map().let_character_out(_battle_view.second_character)
-	_battle_view.tick(0.1)
+# 승패
+func test_내_색이_이기면_WIN을_표시하고_지면_LOSE를_표시한다() -> void:
+	var won := _solo_snapshot()
+	won["winner_color"] = Color.RED
+	_render(won)
 	assert_bool(_battle_view.win_label.visible).is_true()
-	assert_str(_battle_view.win_label.text).contains("1P")
 	assert_bool(_battle_view.lose_label.visible).is_false()
-	assert_bool(_battle_view.draw_label.visible).is_false()
-	_battle_view.battle.get_map().let_character_out(_battle_view.first_character)
-	_battle_view.tick(0.1)
-	assert_bool(_battle_view.win_label.visible).is_true()
-	assert_str(_battle_view.win_label.text).contains("1P")
-	assert_bool(_battle_view.lose_label.visible).is_false()
-	assert_bool(_battle_view.draw_label.visible).is_false()
+	var lost := _solo_snapshot()
+	lost["winner_color"] = Team.MONSTER_COLOR
+	_render(lost)
+	assert_bool(_battle_view.win_label.visible).is_false()
+	assert_bool(_battle_view.lose_label.visible).is_true()
 
-# 로컬 멀티플레이어
-func test_키보드_위쪽_방향키를_누르면_2P_플레이어가_위쪽_방향으로_보인다() -> void:
-	_start_battle(BattleMode.LOCAL_MULTI)
-	_battle_view.tick(0.1)
-	assert_vector(_battle_view.second_character.facing).is_not_equal(Vector2i.UP)
+func test_탈락해도_내_색을_알아서_LOSE를_그린다() -> void:
+	var lost := _solo_snapshot()
+	lost["characters"].remove_at(0)
+	lost["seats"][0]["is_out"] = true
+	lost["winner_color"] = Team.MONSTER_COLOR
+	_render(lost)
+	assert_bool(_battle_view.lose_label.visible).is_true()
+
+func test_로컬_멀티에서는_몇_P가_이겼는지_적는다() -> void:
+	var snapshot := _local_multi_snapshot()
+	snapshot["winner_color"] = Color.GREEN
+	_render(snapshot)
+	assert_str(_battle_view.win_label.text).is_equal("2P WIN!!")
+
+func test_무승부면_무승부_라벨만_보인다() -> void:
+	var snapshot := _solo_snapshot()
+	snapshot["is_draw"] = true
+	_render(snapshot)
+	assert_bool(_battle_view.draw_label.visible).is_true()
+	assert_bool(_battle_view.win_label.visible).is_false()
+
+# 입력
+func test_남의_캐릭터_자리는_내_것으로_치지_않는다() -> void:
+	_render(_solo_snapshot(), OTHER_PEER)
+	assert_array(_battle_view.my_character_numbers()).is_empty()
+
+func test_방향키를_누르면_내_캐릭터를_그_방향으로_이동시킨다() -> void:
+	_render(_solo_snapshot())
+	var sent: Array = []
+	_battle_view.move_requested.connect(func(number: int, d: Vector2i) -> void: sent.append([number, d]))
 	_battle_view.handle_key_pressed(KEY_UP)
-	_battle_view.tick(0.1)
-	assert_vector(_battle_view.second_character.facing).is_equal(Vector2i.UP)
+	assert_array(sent).is_equal([[1, Vector2i.UP]])
 
-func test_키보드_아래쪽_방향키를_누르면_2P_플레이어가_아래쪽_방향으로_보인다() -> void:
-	_start_battle(BattleMode.LOCAL_MULTI)
-	_battle_view.handle_key_pressed(KEY_DOWN)
-	_battle_view.tick(0.1)
-	assert_vector(_battle_view.second_character.facing).is_equal(Vector2i.DOWN)
+func test_같은_방향을_유지하면_이동_방향_요청을_다시_보내지_않는다() -> void:
+	_render(_solo_snapshot())
+	var sent: Array = []
+	_battle_view.move_requested.connect(func(number: int, d: Vector2i) -> void: sent.append([number, d]))
+	_battle_view.handle_key_pressed(KEY_UP)
+	_battle_view.handle_key_pressed(KEY_UP)
+	assert_int(sent.size()).is_equal(1)
+	_battle_view.handle_key_released(KEY_UP)
+	assert_array(sent).is_equal([[1, Vector2i.UP], [1, Vector2i.ZERO]])
 
-func test_키보드_왼쪽_방향키를_누르면_2P_플레이어가_왼쪽_방향으로_보인다() -> void:
-	_start_battle(BattleMode.LOCAL_MULTI)
-	_battle_view.tick(0.1)
-	assert_vector(_battle_view.second_character.facing).is_not_equal(Vector2i.LEFT)
-	_battle_view.handle_key_pressed(KEY_LEFT)
-	_battle_view.tick(0.1)
-	assert_vector(_battle_view.second_character.facing).is_equal(Vector2i.LEFT)
-
-func test_키보드_오른쪽_방향키를_누르면_2P_플레이어가_오른쪽_방향으로_보인다() -> void:
-	_start_battle(BattleMode.LOCAL_MULTI)
-	_battle_view.tick(0.1)
-	assert_vector(_battle_view.second_character.facing).is_not_equal(Vector2i.RIGHT)
-	_battle_view.handle_key_pressed(KEY_RIGHT)
-	_battle_view.tick(0.1)
-	assert_vector(_battle_view.second_character.facing).is_equal(Vector2i.RIGHT)
-
-func test_키보드_오른쪽_시프트_키를_누르면_2P_플레이어가_물풍선을_놓도록_보인다() -> void:
-	_start_battle(BattleMode.LOCAL_MULTI)
-	_battle_view.tick(0.1)
-	assert_int(_battle_view.water_balloon_views.get_child_count()).is_equal(0)
-	_battle_view.handle_key_pressed(KEY_SHIFT, KEY_LOCATION_RIGHT)
-	_battle_view.tick(0.1)
-	assert_int(_battle_view.water_balloon_views.get_child_count()).is_equal(1)
-
-func test_키보드_R_키를_누르면_1P_플레이어가_위쪽_방향으로_보인다() -> void:
-	_start_battle(BattleMode.LOCAL_MULTI)
-	_battle_view.tick(0.1)
-	assert_vector(_battle_view.first_character.facing).is_not_equal(Vector2i.UP)
+func test_로컬_멀티에서는_1P는_RFDG로_움직이고_2P는_방향키로_움직인다() -> void:
+	_render(_local_multi_snapshot())
+	var sent: Array = []
+	_battle_view.move_requested.connect(func(number: int, d: Vector2i) -> void: sent.append([number, d]))
 	_battle_view.handle_key_pressed(KEY_R)
-	_battle_view.tick(0.1)
-	assert_vector(_battle_view.first_character.facing).is_equal(Vector2i.UP)
+	_battle_view.handle_key_pressed(KEY_RIGHT)
+	assert_array(sent).is_equal([[1, Vector2i.UP], [3, Vector2i.RIGHT]])
 
-func test_키보드_F_키를_누르면_1P_플레이어가_아래쪽_방향으로_보인다() -> void:
-	_start_battle(BattleMode.LOCAL_MULTI)
-	_battle_view.handle_key_pressed(KEY_F)
-	_battle_view.tick(0.1)
-	assert_vector(_battle_view.first_character.facing).is_equal(Vector2i.DOWN)
+func test_혼자일_때는_스페이스로_물풍선을_놓는다() -> void:
+	_render(_solo_snapshot())
+	var sent: Array = []
+	_battle_view.water_balloon_requested.connect(func(number: int) -> void: sent.append(number))
+	_battle_view.handle_key_pressed(KEY_SPACE)
+	assert_array(sent).is_equal([1])
 
-func test_키보드_D_키를_누르면_1P_플레이어가_왼쪽_방향으로_보인다() -> void:
-	_start_battle(BattleMode.LOCAL_MULTI)
-	_battle_view.tick(0.1)
-	assert_vector(_battle_view.first_character.facing).is_not_equal(Vector2i.LEFT)
-	_battle_view.handle_key_pressed(KEY_D)
-	_battle_view.tick(0.1)
-	assert_vector(_battle_view.first_character.facing).is_equal(Vector2i.LEFT)
-
-func test_키보드_G_키를_누르면_1P_플레이어가_오른쪽_방향으로_보인다() -> void:
-	_start_battle(BattleMode.LOCAL_MULTI)
-	_battle_view.tick(0.1)
-	assert_vector(_battle_view.first_character.facing).is_not_equal(Vector2i.RIGHT)
-	_battle_view.handle_key_pressed(KEY_G)
-	_battle_view.tick(0.1)
-	assert_vector(_battle_view.first_character.facing).is_equal(Vector2i.RIGHT)
-
-func test_키보드_왼쪽_시프트_키를_누르면_1P_플레이어가_물풍선을_놓도록_보인다() -> void:
-	_start_battle(BattleMode.LOCAL_MULTI)
-	_battle_view.tick(0.1)
-	assert_int(_battle_view.water_balloon_views.get_child_count()).is_equal(0)
+func test_로컬_멀티에서는_좌우_시프트로_각자_물풍선을_놓는다() -> void:
+	_render(_local_multi_snapshot())
+	var sent: Array = []
+	_battle_view.water_balloon_requested.connect(func(number: int) -> void: sent.append(number))
 	_battle_view.handle_key_pressed(KEY_SHIFT, KEY_LOCATION_LEFT)
-	_battle_view.tick(0.1)
-	assert_int(_battle_view.water_balloon_views.get_child_count()).is_equal(1)
-
-# 캐릭터 색상
-func test_캐릭터의_색상에_맞게_뷰의_쉐이더_색상이_적용된다() -> void:
-	_start_battle(BattleMode.LOCAL_MULTI)
-	_battle_view.tick(0.1)
-	var first_view := _battle_view.view_by_character[_battle_view.first_character]
-	var second_view := _battle_view.view_by_character[_battle_view.second_character]
-	assert_that((first_view.material as ShaderMaterial).get_shader_parameter("color")).is_equal(Color.RED)
-	assert_that((second_view.material as ShaderMaterial).get_shader_parameter("color")).is_equal(Color.BLUE)
-
-func test_캐릭터가_바라보는_방향의_마스크가_적용된다() -> void:
-	_start_battle(BattleMode.LOCAL_MULTI)
-	_battle_view.tick(0.1)
-	var second_view = _battle_view.view_by_character[_battle_view.second_character]
-	_battle_view.handle_key_pressed(KEY_UP)
-	_battle_view.tick(0.1)
-	assert_that((second_view.material as ShaderMaterial).get_shader_parameter("mask_texture")).is_equal(second_view.masks["walk_up"])
+	_battle_view.handle_key_pressed(KEY_SHIFT, KEY_LOCATION_RIGHT)
+	assert_array(sent).is_equal([1, 3])

@@ -19,11 +19,6 @@ func render(snapshot: Dictionary) -> void:
 	for room in rooms:
 		room_list.add_child(_create_room_entry(room))
 
-func render_original(lobby: Lobby) -> void:
-	_clear_room_list()
-	for room in lobby.rooms:
-		room_list.add_child(_create_room_entry_original(room))
-
 func room_count() -> int:
 	return room_list.get_child_count()
 
@@ -45,20 +40,6 @@ func _create_room_entry(room: Dictionary) -> Button:
 		room["character_count"],
 		Map.SEAT_START_CELLS.size(),
 		MODE_NAMES.get(room["mode"]),
-	]
-	entry.pressed.connect(room_chosen.emit.bind(room.id))
-	return entry
-
-func _create_room_entry_original(room: Room) -> Button:
-	var entry := Button.new()
-	entry.theme_type_variation = &"RoomRow"
-	entry.alignment = HORIZONTAL_ALIGNMENT_LEFT
-	entry.custom_minimum_size = ENTRY_SIZE
-	entry.text = "방 %s\n%d / %d  ·  %s" % [
-		room.id.substr(0, ROOM_ID_DIGITS),
-		room.characters().size(),
-		Map.SEAT_START_CELLS.size(),
-		MODE_NAMES.get(room.battle_mode, "-"),
 	]
 	entry.pressed.connect(room_chosen.emit.bind(room.id))
 	return entry
