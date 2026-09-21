@@ -168,7 +168,8 @@ func snapshot(peer_id: int) -> Dictionary:
 		seats_snapshot.append({
 			"number": character.number,
 			"color": character.color,
-			"is_npc": character is Npc
+			"is_npc": character is Npc,
+			"peer_id": character.id
 		})
 	return {
 		"id": id,

@@ -151,10 +151,10 @@ func test_방_스냅샷은_방_정보와_자리_목록을_담는다() -> void:
 		"can_battle_start": true,
 		"local_multi_on": true,
 		"seats": [
-			{"number": 1, "color": Color.RED, "is_npc": false},
-			{"number": 2, "color": Color.GREEN, "is_npc": false},
-			{"number": 3, "color": Color.YELLOW, "is_npc": false},
-			{"number": 4, "color": Team.MONSTER_COLOR, "is_npc": true},
+			{"number": 1, "color": Color.RED, "is_npc": false, "peer_id": 11},
+			{"number": 2, "color": Color.GREEN, "is_npc": false, "peer_id": 22},
+			{"number": 3, "color": Color.YELLOW, "is_npc": false, "peer_id": 11},
+			{"number": 4, "color": Team.MONSTER_COLOR, "is_npc": true, "peer_id": 0},
 		],
 	})
 
