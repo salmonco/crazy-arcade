@@ -79,6 +79,11 @@ func request_move(number: int, direction: Vector2i) -> void:
 func request_place_water_balloon(number: int) -> void:
 	place_water_balloon(number, multiplayer.get_remote_sender_id())
 
+@rpc("any_peer", "call_remote", "reliable")
+func request_set_character_color(number: int, color: Color) -> void:
+	set_character_color(number, color, multiplayer.get_remote_sender_id())
+	_broadcast()
+
 @rpc("authority", "call_remote", "reliable")
 func screen_changed(_snapshot: Dictionary) -> void:
 	pass
@@ -142,6 +147,15 @@ func place_water_balloon(number: int, peer_id: int) -> void:
 	if room == null:
 		return
 	room.place_water_balloon(peer_id, number)
+
+func set_character_color(number: int, color: Color, peer_id: int) -> void:
+	var found: Character = null
+	for character in lobby.characters:
+		if character.id == peer_id and character.number == number:
+			found = character
+	if found == null:
+		return
+	found.color = color
 
 func _second_player_color(battle_mode: StringName) -> Color:
 	return Team.PLAYER_COLOR if battle_mode == BattleMode.MONSTER else Team.SECOND_PLAYER_COLOR

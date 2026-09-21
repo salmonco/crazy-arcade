@@ -233,3 +233,13 @@ func test_배틀이_끝나는_프레임에도_그_방_사람에게_보낸다() -
 	assert_array(_server.tick(step, [11])).is_equal([11])
 	assert_that(room.get_battle()).is_null()
 	assert_that(_server.lobby.snapshot_for(11)["screen"]).is_equal(Screen.ROOM)
+
+# 캐릭터 색상
+func test_캐릭터의_색상을_변경할_수_있다() -> void:
+	var room := _server.create_room()
+	_server.on_peer_connected(11)
+	_server.enter_room(room.id, 11)
+	_server.set_character_color(1, Color.ORANGE, 11)
+	assert_that(_server.lobby.find_character(11).color).is_equal(Color.ORANGE)
+	_server.set_character_color(1, Color.GREEN, 11)
+	assert_that(_server.lobby.find_character(11).color).is_equal(Color.GREEN)

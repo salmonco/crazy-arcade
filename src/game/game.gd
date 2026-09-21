@@ -17,6 +17,7 @@ func _ready() -> void:
 	room_view.monster_mode_check.toggled.connect(set_monster_mode)
 	room_view.start_button.pressed.connect(start_battle)
 	room_view.local_multi_check.toggled.connect(set_local_multi)
+	room_view.color_chosen.connect(set_character_color)
 	battle_view.move_requested.connect(move)
 	battle_view.water_balloon_requested.connect(place_water_balloon)
 	multiplayer.connected_to_server.connect(on_connected_to_server)
@@ -64,6 +65,10 @@ func request_move(_number: int, _direction: Vector2i) -> void:
 func request_place_water_balloon(_number: int) -> void:
 	pass
 
+@rpc("any_peer", "call_remote", "reliable")
+func request_set_character_color(_number: int, _color: Color) -> void:
+	pass
+
 @rpc("authority", "call_remote", "reliable")
 func screen_changed(snapshot: Dictionary) -> void:
 	match snapshot["screen"]:
@@ -76,7 +81,7 @@ func screen_changed(snapshot: Dictionary) -> void:
 			lobby_view.visible = false
 			room_view.visible = true
 			battle_view.visible = false
-			room_view.render(snapshot["room"])
+			room_view.render(snapshot["room"], peer_id)
 		Screen.BATTLE:
 			lobby_view.visible = false
 			room_view.visible = false
@@ -106,3 +111,6 @@ func move(number: int, direction: Vector2i) -> void:
 
 func place_water_balloon(number: int) -> void:
 	request_place_water_balloon.rpc_id(1, number)
+
+func set_character_color(number: int, color: Color) -> void:
+	request_set_character_color.rpc_id(1, number, color)

@@ -54,6 +54,10 @@ func _request_set_monster_mode(enabled: bool) -> void:
 	_server.set_monster_mode(enabled, _game.peer_id)
 	_sync()
 
+func _request_set_character_color(number: int, color: Color) -> void:
+	_server.set_character_color(number, color, _game.peer_id)
+	_sync()
+
 # 로비에서 방 입장
 func test_방_ID로_입장하면_방_화면이_된다() -> void:
 	_request_create_room_and_enter_room()
@@ -143,6 +147,9 @@ func test_몬스터_모드를_켜면_NPC_슬롯이_NPC로_그려진다() -> void
 	assert_object(_game.room_view.slot(0).texture).is_equal(RoomView.PLAYER_SLOT_TEXTURE)
 	assert_object(_game.room_view.slot(1).texture).is_equal(RoomView.NPC_SLOT_TEXTURE)
 
+func _slot_color(index: int) -> Color:
+	return (_game.room_view.slot(index).material as ShaderMaterial).get_shader_parameter("color")
+
 func test_로컬_멀티면_1P와_2P_슬롯이_다른_색으로_그려진다() -> void:
 	_request_create_room_and_enter_room()
 	_request_set_local_multi(true)
@@ -160,9 +167,6 @@ func test_몬스터_모드면_사람_슬롯은_같은_색이고_NPC만_다른_�
 	var second_player_index := 2 if npc_index == 1 else 1
 	assert_that(_slot_color(second_player_index)).is_equal(_slot_color(0))
 	assert_that(_slot_color(npc_index)).is_not_equal(_slot_color(0))
-
-func _slot_color(index: int) -> Color:
-	return (_game.room_view.slot(index).material as ShaderMaterial).get_shader_parameter("color")
 
 func test_로컬_멀티를_켜면_2P가_들어와_게임을_시작할_수_있다() -> void:
 	_request_create_room_and_enter_room()
@@ -406,3 +410,14 @@ func test_나_말고_다른_피어가_방에서_떠나도_방_화면은_유지�
 	assert_bool(_game.room_view.visible).is_true()
 	_server.leave_room(peer2_id)
 	assert_bool(_game.room_view.visible).is_true()
+
+# 캐릭터 색상
+func _character_color_in_battle(number: int) -> Color:
+	return (_game.battle_view.view_by_character_number[number].material as ShaderMaterial).get_shader_parameter("color")
+
+func test_피어는_자신의_캐릭터_색상을_변경할_수_있다() -> void:
+	_request_create_room_and_enter_room()
+	_request_set_character_color(1, Color.ORANGE)
+	assert_that(_slot_color(0)).is_equal(Color.ORANGE)
+	_request_start_battle()
+	assert_that(_character_color_in_battle(1)).is_equal(Color.ORANGE)
