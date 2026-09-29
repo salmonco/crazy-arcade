@@ -149,13 +149,10 @@ func place_water_balloon(number: int, peer_id: int) -> void:
 	room.place_water_balloon(peer_id, number)
 
 func set_character_color(number: int, color: Color, peer_id: int) -> void:
-	var found: Character = null
 	for character in lobby.characters:
-		if character.id == peer_id and character.number == number:
-			found = character
-	if found == null:
-		return
-	found.color = color
+		if character.number == number and character.id == peer_id:
+			character.color = color
+			return
 
 func _second_player_color(battle_mode: StringName) -> Color:
 	return Team.PLAYER_COLOR if battle_mode == BattleMode.MONSTER else Team.SECOND_PLAYER_COLOR
