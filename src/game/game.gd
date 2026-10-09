@@ -26,7 +26,7 @@ func _create_peer() -> void:
 	var peer := WebSocketMultiplayerPeer.new()
 	var error := peer.create_client(URL)
 	if error != OK:
-		push_error("%d failed to create client: %s" % [URL, error_string(error)])
+		push_error("%s failed to create client: %s" % [URL, error_string(error)])
 		return
 	multiplayer.multiplayer_peer = peer
 
