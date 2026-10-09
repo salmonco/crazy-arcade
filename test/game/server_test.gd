@@ -43,6 +43,11 @@ func test_피어가_접속을_끊으면_로비에_해당_피어의_캐릭터가_
 	_server.on_peer_disconnected(peer_id)
 	assert_that(_server.lobby.find_character(peer_id)).is_null()
 
+func test_모르는_피어가_접속을_끊어도_로비는_그대로다() -> void:
+	_server.on_peer_connected(11)
+	_server.on_peer_disconnected(22)
+	assert_int(_server.lobby.characters.size()).is_equal(1)
+
 func test_방을_생성한다() -> void:
 	assert_int(_server.lobby.room_count()).is_equal(0)
 	var room := _server.create_room()

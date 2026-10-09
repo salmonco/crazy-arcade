@@ -36,6 +36,8 @@ func on_peer_connected(id: int) -> void:
 func on_peer_disconnected(id: int) -> void:
 	print("피어 접속 끊김: %d" % id)
 	var character := lobby.find_character(id)
+	if character == null:
+		return
 	if character.joined_room_id != "":
 		leave_room(id)
 	lobby.remove_character(character)
