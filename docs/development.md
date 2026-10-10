@@ -26,6 +26,8 @@ brew install --cask godot
 ./run                       # 터미널 2: 클라이언트
 ```
 
+배포는 [deployment.md](deployment.md)에 있습니다.
+
 ## 테스트
 
 ```bash
@@ -41,11 +43,11 @@ brew install --cask godot
 ## 웹 빌드
 
 ```bash
-./build -h                  # 사용법
-./build                     # 테스트 후 web-build/index.html 로 내보내기
-./build -d                  # 디버그 빌드 (브라우저 콘솔에 스택 트레이스)
-./build -s                  # 테스트 건너뛰기
-./build dist/index.html     # 다른 경로로 (상대 경로는 프로젝트 루트 기준)
+./build-web -h                  # 사용법
+./build-web                     # 테스트 후 web-build/index.html 로 내보내기
+./build-web -d                  # 디버그 빌드 (브라우저 콘솔에 스택 트레이스)
+./build-web -s                  # 테스트 건너뛰기
+./build-web dist/index.html     # 다른 경로로 (상대 경로는 프로젝트 루트 기준)
 ```
 
 **내보내기 전에 테스트를 돌립니다.** `--export-release`는 스크립트를 컴파일하지 않습니다.
@@ -55,12 +57,12 @@ brew install --cask godot
 결과물은 `file://`로 열리지 않습니다. Godot이 `.pck`를 fetch로 읽는데 `file://`은 CORS에
 막힙니다. HTTP로 띄우세요. 빌드가 끝나면 그 명령을 찍어줍니다.
 
-`export_presets.cfg`는 `.gitignore` 대상이라 클론에는 안 따라옵니다. 없으면 `./build`가
+`export_presets.cfg`는 `.gitignore` 대상이라 클론에는 안 따라옵니다. 없으면 `./build-web`이
 무엇을 해야 하는지 알려주고 멈춥니다.
 
-`./t`, `./run`, `./build`는 각각 `bin/test.sh`, `bin/run.sh`, `bin/build.sh`를 부르는 한 줄짜리
-단축 실행기입니다. 플래그는 자유롭게 조합됩니다. Godot 실행 파일을 찾는 로직은
-`bin/_godot.sh`에 한 번만 두고 셋이 공유합니다.
+루트의 `./t`, `./run`, `./build-web`, `./build-server`, `./deploy-server`는 같은 이름의
+`bin/*.sh`(`./t`는 `bin/test.sh`)를 부르는 한 줄짜리 단축 실행기입니다. 플래그는 자유롭게
+조합됩니다. Godot 실행 파일을 찾는 로직은 `bin/_godot.sh`에 한 번만 두고 함께 씁니다.
 
 ## 구조
 
