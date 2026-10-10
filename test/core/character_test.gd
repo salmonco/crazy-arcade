@@ -307,3 +307,10 @@ func test_캐릭터는_방_ID_로_방에_입장할_수_있다() -> void:
 	var character := Character.new(Vector2i(1, 2))
 	room.add_character(character)
 	assert_str(character.joined_room_id).is_equal(room.id)
+
+# 색상
+func test_캐릭터는_자신의_색상을_변경할_수_있다() -> void:
+	var character := Character.new(Vector2i.ZERO, 0, Color.ORANGE)
+	assert_that(character.color).is_equal(Color.ORANGE)
+	character.color = Color.GREEN
+	assert_that(character.color).is_equal(Color.GREEN)

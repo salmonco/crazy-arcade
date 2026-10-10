@@ -1,9 +1,0 @@
-#!/usr/bin/env bash
-# 웹 빌드 단축 실행기. bin/build.sh 로 그대로 넘깁니다.
-#
-#   ./build                  # 테스트 후 web-build/index.html 로 내보내기
-#   ./build -d               # 디버그 빌드
-#   ./build -s               # 테스트 건너뛰기
-#   ./build dist/index.html  # 다른 경로로
-#   ./build -h               # 사용법
-exec "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/bin/build.sh" "$@"

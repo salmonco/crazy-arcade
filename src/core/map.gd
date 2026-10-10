@@ -18,6 +18,9 @@ var _game_items: Array[GameItem] = []
 static func to_pixel(cell: Vector2i) -> Vector2:
 	return Vector2(cell) * PIXELS_PER_CELL
 
+static func to_pixel_continuous(position: Vector2) -> Vector2:
+	return position * PIXELS_PER_CELL
+
 static func to_pixel_center(cell: Vector2i) -> Vector2:
 	return to_pixel(cell) + Vector2.ONE * (Map.PIXELS_PER_CELL / 2.0)
 
@@ -82,6 +85,17 @@ func tick(delta: float) -> void:
 	for game_item in _game_items.duplicate():
 		if water_stream_positions().has(game_item.position):
 			_remove_game_item(game_item)
+
+	_move_characters(delta)
+
+func _move_characters(delta: float) -> void:
+	for character in _characters.duplicate():
+		if character is Npc:
+			character.heading = character.decide_move_direction(self)
+		if character.heading != Vector2i.ZERO:
+			character.move(character.heading, delta, water_balloon_positions())
+		if character is Npc and character.should_place_water_balloon(self):
+			character.place_water_balloon(self)
 
 func add_water_streams(center_cell: Vector2i, length: int, elapsed_time: float = 0.0) -> void:
 	var center_water_stream := WaterStream.new(center_cell, Vector2i.ZERO, "center", elapsed_time)

@@ -49,7 +49,7 @@ run_tests() {
 	local log
 	log="$(mktemp)"
 
-	printf '\033[2J\033[H'  # 화면 클리어
+	printf '\033[2J\033[3J\033[H'  # 화면 + 스크롤백 클리어. 3J 가 없으면 지난 실행이 위로 밀려 남습니다.
 	printf '\033[1m watch: %s\033[0m   \033[90m(%s · Ctrl-C로 종료)\033[0m\n\n' \
 		"$TARGET" "$(date +%H:%M:%S)"
 
@@ -63,9 +63,54 @@ run_tests() {
 	code=$?
 
 	# ANSI 코드를 벗기고 결과 줄만 추립니다.
-	sed 's/\x1b\[[0-9;]*m//g' "$log" \
-		| grep -E "캐시 갱신|PASSED|FAILED|Parse Error|Report:|line [0-9]+:|Expecting:|but was|Overall Summary" \
-		| sed -E "s|res://test/[^ ]*> ||"
+	# 실패 리포트는 문구를 열거하지 않고 'Report:' 부터 빈 줄까지 블록째 남깁니다.
+	# 실패 위치는 '파일:줄' 로 고쳐 찍습니다. 터미널에서 눌러 바로 열 수 있습니다.
+	sed 's/\x1b\[[0-9;]*[A-Za-z]//g' "$log" \
+		| awk '
+			/Run Test Suite:/ {
+				suite = $0
+				sub(/.*Run Test Suite: */, "", suite)
+				sub(/^res:\/\//, "", suite)
+				if (suites++) printf "\n"
+				printf "\033[1m%s\033[0m\n", suite
+				next
+			}
+			/ > .* (PASSED|FAILED) [0-9]+ms$/ {
+				name = $0
+				sub(/^.* > /, "", name)
+				sub(/ (PASSED|FAILED) [0-9]+ms$/, "", name)
+				sub(/^test_/, "", name)
+				if ($0 ~ / FAILED /) {
+					located = 0
+					fails[++n] = suite "  " name
+					printf "  \033[31m✗ FAILED\033[0m %s\n", name
+				} else {
+					printf "  \033[32m✓\033[0m %s\n", name
+				}
+				next
+			}
+			/Report:/ { in_report = 1; next }
+			in_report && /^[[:space:]]*$/ { in_report = 0; next }
+			in_report {
+				if (n > 0 && !located && match($0, /line [0-9]+:/)) {
+					located = 1
+					where = suite ":" substr($0, RSTART + 5, RLENGTH - 6)
+					fails[n] = where "  " name
+					sub(/line [0-9]+:/, where, $0)
+				}
+				print
+				next
+			}
+			/^[[:space:]]+Parse Error/ { print; next }
+			/^[[:space:]]*at res:\/\// { sub(/res:\/\//, ""); print; next }
+			/캐시 갱신|Abnormal exit|Overall Summary/ { print }
+			END {
+				if (n > 0) {
+					printf "\n\033[31m 실패 %d개\033[0m\n", n
+					for (i = 1; i <= n; i++) printf "   %s\n", fails[i]
+				}
+			}
+		'
 
 	echo
 	if [[ $code -eq 0 ]]; then

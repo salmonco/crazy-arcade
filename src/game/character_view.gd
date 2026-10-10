@@ -3,13 +3,13 @@ extends AnimatedSprite2D
 
 @export var masks: Dictionary[StringName, Texture2D] = {}
 
-func sync(character: Character) -> void:
-	position = character.pixel_position()
-	(material as ShaderMaterial).set_shader_parameter("color", character.color)
-	if character.is_trapped():
+func sync(character: Dictionary) -> void:
+	position = Map.to_pixel_continuous(character["cell"])
+	(material as ShaderMaterial).set_shader_parameter("color", character["color"])
+	if character["is_trapped"]:
 		_play("bubble")
 		return
-	match character.facing:
+	match character["facing"]:
 		Vector2i.UP:
 			_play("walk_up")
 		Vector2i.DOWN:
@@ -20,7 +20,6 @@ func sync(character: Character) -> void:
 		Vector2i.RIGHT:
 			_play("walk_side")
 			flip_h = false
-	return
 
 func _play(anim: StringName) -> void:
 	play(anim)

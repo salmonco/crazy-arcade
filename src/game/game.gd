@@ -5,80 +5,111 @@ extends Node
 @onready var room_view: RoomView = $RoomView
 @onready var battle_view: BattleView = $BattleView
 
-var lobby := Lobby.new()
-var current_room: Room
-var player_character := Character.new(Vector2i.ZERO, 1, Color.RED)
-var second_player_character: Character
+var peer_id: int
 
 func _ready() -> void:
+	_create_peer()
 	lobby_view.create_room_button.pressed.connect(create_room)
 	room_view.leave_button.pressed.connect(leave_room)
 	lobby_view.room_chosen.connect(enter_room)
 	room_view.monster_mode_check.toggled.connect(set_monster_mode)
-	room_view.start_button.pressed.connect(start_game)
+	room_view.start_button.pressed.connect(start_battle)
 	room_view.local_multi_check.toggled.connect(set_local_multi)
-	battle_view.game_over.connect(finish_game)
+	room_view.color_chosen.connect(set_character_color)
+	battle_view.move_requested.connect(move)
+	battle_view.water_balloon_requested.connect(place_water_balloon)
+	multiplayer.connected_to_server.connect(on_connected_to_server)
+
+func _create_peer() -> void:
+	var url: String = ProjectSettings.get_setting_with_override("network/server_url")
+	var peer := WebSocketMultiplayerPeer.new()
+	var error := peer.create_client(url)
+	if error != OK:
+		push_error("%s failed to create client: %s" % [url, error_string(error)])
+		return
+	multiplayer.multiplayer_peer = peer
+
+func on_connected_to_server() -> void:
+	peer_id = multiplayer.get_unique_id()
+
+@rpc("any_peer", "call_remote", "reliable")
+func request_create_room() -> void:
+	pass
+
+@rpc("any_peer", "call_remote", "reliable")
+func request_enter_room(_room_id: String) -> void:
+	pass
+
+@rpc("any_peer", "call_remote", "reliable")
+func request_leave_room() -> void:
+	pass
+
+@rpc("any_peer", "call_remote", "reliable")
+func request_start_battle() -> void:
+	pass
+
+@rpc("any_peer", "call_remote", "reliable")
+func request_set_local_multi(_enabled: bool) -> void:
+	pass
+
+@rpc("any_peer", "call_remote", "reliable")
+func request_set_monster_mode(_enabled: bool) -> void:
+	pass
+
+@rpc("any_peer", "call_remote", "reliable")
+func request_move(_number: int, _direction: Vector2i) -> void:
+	pass
+
+@rpc("any_peer", "call_remote", "reliable")
+func request_place_water_balloon(_number: int) -> void:
+	pass
+
+@rpc("any_peer", "call_remote", "reliable")
+func request_set_character_color(_number: int, _color: Color) -> void:
+	pass
+
+@rpc("authority", "call_remote", "reliable")
+func screen_changed(snapshot: Dictionary) -> void:
+	match snapshot["screen"]:
+		Screen.LOBBY:
+			lobby_view.visible = true
+			room_view.visible = false
+			battle_view.visible = false
+			lobby_view.render(snapshot["lobby"])
+		Screen.ROOM:
+			lobby_view.visible = false
+			room_view.visible = true
+			battle_view.visible = false
+			room_view.render(snapshot["room"], peer_id)
+		Screen.BATTLE:
+			lobby_view.visible = false
+			room_view.visible = false
+			battle_view.visible = true
+			battle_view.render(snapshot["battle"], peer_id)
 
 func create_room() -> void:
-	enter_room(lobby.create_room().id)
+	request_create_room.rpc_id(1)
 
-func start_game() -> void:
-	current_room.game_start()
-	battle_view.show_battle(current_room.get_battle())
-	room_view.visible = false
-	battle_view.visible = true
-
-func finish_game() -> void:
-	current_room.game_over()
-	room_view.visible = true
-	battle_view.visible = false
-
-func set_local_multi(enabled: bool) -> void:
-	if enabled:
-		_add_second_player()
-	else:
-		_remove_second_player()
-	room_view.render(current_room)
-
-func _add_second_player() -> void:
-	if second_player_character != null:
-		return
-	second_player_character = Character.new(Vector2i.ZERO, 2, _second_player_color())
-	current_room.add_character(second_player_character)
-
-func _remove_second_player() -> void:
-	if second_player_character == null:
-		return
-	current_room.remove_character(second_player_character)
-	second_player_character = null
-
-func set_monster_mode(enabled: bool) -> void:
-	current_room.set_battle_mode(BattleMode.MONSTER if enabled else BattleMode.LOCAL_MULTI)
-	if second_player_character != null:
-		second_player_character.color = _second_player_color()
-	room_view.render(current_room)
-
-func _second_player_color() -> Color:
-	if current_room.battle_mode == BattleMode.MONSTER:
-		return player_character.color
-	return Team.SECOND_PLAYER_COLOR
+func enter_room(room_id: String) -> void:
+	request_enter_room.rpc_id(1, room_id)
 
 func leave_room() -> void:
-	current_room.remove_character(player_character)
-	_remove_second_player()
-	current_room = null
-	lobby_view.render(lobby)
-	room_view.visible = false
-	lobby_view.visible = true
+	request_leave_room.rpc_id(1)
 
-func enter_room(id: String) -> void:
-	var room := lobby.find_room(id)
-	if room == null:
-		return
-	if current_room != null:
-		leave_room()
-	current_room = room
-	room.add_character(player_character)
-	room_view.render(room)
-	lobby_view.visible = false
-	room_view.visible = true
+func start_battle() -> void:
+	request_start_battle.rpc_id(1)
+
+func set_local_multi(enabled: bool) -> void:
+	request_set_local_multi.rpc_id(1, enabled)
+
+func set_monster_mode(enabled: bool) -> void:
+	request_set_monster_mode.rpc_id(1, enabled)
+
+func move(number: int, direction: Vector2i) -> void:
+	request_move.rpc_id(1, number, direction)
+
+func place_water_balloon(number: int) -> void:
+	request_place_water_balloon.rpc_id(1, number)
+
+func set_character_color(number: int, color: Color) -> void:
+	request_set_character_color.rpc_id(1, number, color)

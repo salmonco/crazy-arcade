@@ -1,7 +1,16 @@
 class_name Team
 extends RefCounted
 
+const COLOR_PALETTE: Array[Color] = [
+	Color.RED,
+	Color.BLUE,
+	Color.GREEN,
+	Color.YELLOW,
+	Color.ORANGE,
+	Color.PURPLE,
+]
 const MONSTER_COLOR := Color.BLUE
+const PLAYER_COLOR := Color.RED
 const SECOND_PLAYER_COLOR := Color.BLUE
 
 static func colors(characters: Array[Character]) -> Array[Color]:

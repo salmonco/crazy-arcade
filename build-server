@@ -1,0 +1,7 @@
+#!/usr/bin/env bash
+# 서버 빌드 단축 실행기. bin/build-server.sh 로 그대로 넘깁니다.
+#
+#   ./build-server        # 테스트 후 server-build/crazy-arcade-server.x86_64 로 내보내기
+#   ./build-server -s     # 테스트 건너뛰기
+#   ./build-server -h     # 사용법
+exec "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/bin/build-server.sh" "$@"

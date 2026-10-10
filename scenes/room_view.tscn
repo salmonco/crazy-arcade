@@ -83,6 +83,11 @@ theme_type_variation = &"Toggle"
 toggle_mode = true
 text = "협공배틀"
 
+[node name="Palette" type="HBoxContainer" parent="Center/Panel/Margin/Box"]
+unique_name_in_owner = true
+theme_override_constants/separation = 10
+alignment = 1
+
 [node name="Buttons" type="HBoxContainer" parent="Center/Panel/Margin/Box"]
 theme_override_constants/separation = 16
 
