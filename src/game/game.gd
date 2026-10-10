@@ -5,8 +5,6 @@ extends Node
 @onready var room_view: RoomView = $RoomView
 @onready var battle_view: BattleView = $BattleView
 
-const URL := "ws://localhost:%d" % Server.PORT
-
 var peer_id: int
 
 func _ready() -> void:
@@ -23,10 +21,11 @@ func _ready() -> void:
 	multiplayer.connected_to_server.connect(on_connected_to_server)
 
 func _create_peer() -> void:
+	var url: String = ProjectSettings.get_setting("network/server_url")
 	var peer := WebSocketMultiplayerPeer.new()
-	var error := peer.create_client(URL)
+	var error := peer.create_client(url)
 	if error != OK:
-		push_error("%s failed to create client: %s" % [URL, error_string(error)])
+		push_error("%s failed to create client: %s" % [url, error_string(error)])
 		return
 	multiplayer.multiplayer_peer = peer
 
