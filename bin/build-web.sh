@@ -1,13 +1,13 @@
 #!/usr/bin/env bash
 # 웹 빌드를 만듭니다.
 #
-#   사용법: ./build [-d|--debug] [-s|--skip-tests] [출력 경로]
-#     경로 없으면 web-build/index.html 로 내보냅니다.  (./build 는 이 스크립트의 단축 실행기)
+#   사용법: ./build-web [-d|--debug] [-s|--skip-tests] [출력 경로]
+#     경로 없으면 web-build/index.html 로 내보냅니다.  (./build-web 는 이 스크립트의 단축 실행기)
 #     -d: 디버그 빌드 (에러와 스택 트레이스가 브라우저 콘솔에 나옵니다).
 #     -s: 테스트를 건너뜁니다.
-#     예)  ./build
-#          ./build -d
-#          ./build dist/index.html
+#     예)  ./build-web
+#          ./build-web -d
+#          ./build-web dist/index.html
 #
 # [중요] 내보내기 전에 ./t 를 돌립니다. 느려서가 아니라, 그러지 않으면 깨진 빌드를
 # 알아챌 방법이 없기 때문입니다. `--export-release` 는 스크립트를 컴파일하지 않습니다.
@@ -42,7 +42,7 @@ while [[ $# -gt 0 ]]; do
 			;;
 		-*)
 			echo "알 수 없는 옵션: $1" >&2
-			echo "사용법: ./build [-d|--debug] [-s|--skip-tests] [출력 경로]" >&2
+			echo "사용법: ./build-web [-d|--debug] [-s|--skip-tests] [출력 경로]" >&2
 			exit 2
 			;;
 		*) target="$1"; shift ;;
@@ -71,12 +71,12 @@ else
 	echo "테스트 실행 중..." >&2
 	if ! "$ROOT/bin/test.sh" >/dev/null 2>&1; then
 		echo "테스트가 실패했습니다. 빌드하지 않습니다." >&2
-		echo "  ./t 로 무엇이 깨졌는지 보세요.  (급하면 ./build -s)" >&2
+		echo "  ./t 로 무엇이 깨졌는지 보세요.  (급하면 ./build-web -s)" >&2
 		exit 1
 	fi
 fi
 
-# 상대 경로는 프로젝트 루트 기준으로 봅니다. 어디서 부르든 ./build dist/index.html 이
+# 상대 경로는 프로젝트 루트 기준으로 봅니다. 어디서 부르든 ./build-web dist/index.html 이
 # 같은 자리를 가리키게 하려는 것이고, 절대 경로는 그대로 씁니다.
 if [[ "$target" == /* ]]; then
 	out_path="$target"
