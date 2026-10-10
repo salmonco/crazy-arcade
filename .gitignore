@@ -31,3 +31,6 @@ __pycache__/
 /server-build/*
 !/server-build/.gdignore
 .gstack/
+
+# 배포 접속 정보 (bin/deploy-server.sh)
+.deploy-server.env
