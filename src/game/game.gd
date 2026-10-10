@@ -21,7 +21,7 @@ func _ready() -> void:
 	multiplayer.connected_to_server.connect(on_connected_to_server)
 
 func _create_peer() -> void:
-	var url: String = ProjectSettings.get_setting("network/server_url")
+	var url: String = ProjectSettings.get_setting_with_override("network/server_url")
 	var peer := WebSocketMultiplayerPeer.new()
 	var error := peer.create_client(url)
 	if error != OK:
