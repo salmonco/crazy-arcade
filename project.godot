@@ -17,6 +17,7 @@ boot_splash/bg_color=Color(0.46666667, 0.61960787, 0.75686276, 1)
 boot_splash/image="res://assets/splash.png"
 config/icon="res://assets/icon.png"
 run/main_scene.dedicated_server="res://scenes/server.tscn"
+run/flush_stdout_on_print=true
 
 [display]
 
