@@ -4,12 +4,13 @@
 
 ## 제작 배경
 
-크아 서비스 종료(2026.08.13)가 계기가 되었습니다.
-크아 15년차 유저로서, 크아의 손맛과 스릴을 다시 느끼고 싶었습니다.
-직접 만들면 개발 경험도 쌓일 것 같았습니다.
-결론적으로 오직 저의 재미를 위해 만들기로 했습니다.
+- 2026년 08월 13일은 크아 서비스 종료일입니다.
+- 크아 15년차 유저로서, 크아의 손맛을 되살리고 싶었습니다.
+- 직접 만들어서 개발 경험과 재미를 얻고자 시작한 프로젝트입니다.
 
 ## 게임 방법
+
+[웹사이트](https://petit-ca.vercel.app/)에서 플레이하실 수 있습니다.
 
 ### 목표
 
@@ -27,8 +28,14 @@
 
 상대방이 모두 아웃되면 종료됩니다.
 
----
+## 제작 과정
 
-플레이 링크: https://petit-ca.vercel.app/
+1. [같은 팀 구출하기](https://www.youtube.com/watch?v=mOlMjdmoJig)
+2. [배틀 종료 후 방으로 이동하기](https://www.youtube.com/watch?v=bcgyez8k5y8)
+3. [로컬 멀티 모드에서 2P 자리 고정하기](https://www.youtube.com/watch?v=K9KibvJBISs)
+4. [피어가 방에 입장하기](https://www.youtube.com/watch?v=jTPrtasiQHg)
+5. [멀티플레이어 색깔 바꾸기](https://www.youtube.com/watch?v=PhUvnctFJls)
 
-개발에 참여하시려면 [개발 가이드](docs/development.md)를 보세요.
+## Contributing
+
+기여 환영합니다! 개발에 참여하시려면 [개발 가이드](docs/development.md)를 참고해 주세요.
