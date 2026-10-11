@@ -39,3 +39,7 @@
 ## Contributing
 
 기여 환영합니다! 개발에 참여하시려면 [개발 가이드](docs/development.md)를 참고해 주세요.
+
+## License
+
+[MIT](LICENSE)
