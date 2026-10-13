@@ -217,10 +217,11 @@ func _render_game_over_label() -> void:
 		win_label.visible = has_winner and winner_color == my_colors[0]
 		lose_label.visible = has_winner and winner_color != my_colors[0]
 		return
-	win_label.visible = has_winner
-	lose_label.visible = false
-	if has_winner:
-		win_label.text = "1P WIN!!" if winner_color == my_colors[0] else "2P WIN!!"
+	var winner_index := my_colors.find(winner_color)
+	win_label.visible = has_winner and winner_index != -1
+	lose_label.visible = has_winner and winner_index == -1
+	if win_label.visible:
+		win_label.text = "%dP WIN!!" % (winner_index + 1)
 
 func _my_colors() -> Array[Color]:
 	var numbers := my_character_numbers()

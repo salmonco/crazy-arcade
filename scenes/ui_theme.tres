@@ -1,4 +1,4 @@
-[gd_resource type="Theme" load_steps=20 format=3]
+[gd_resource type="Theme" load_steps=21 format=3]
 
 [ext_resource type="FontFile" uid="uid://pgm00pyb6ply" path="res://assets/fonts/Pretendard-Regular.woff2" id="0_font"]
 [ext_resource type="Texture2D" path="res://assets/ui/button_normal.png" id="1_btn_normal"]
@@ -117,6 +117,22 @@ corner_radius_top_right = 8
 corner_radius_bottom_right = 8
 corner_radius_bottom_left = 8
 
+[sub_resource type="StyleBoxFlat" id="RoomRowDisabled"]
+content_margin_left = 16.0
+content_margin_top = 9.0
+content_margin_right = 16.0
+content_margin_bottom = 9.0
+bg_color = Color(0.70588235, 0.78431373, 0.83137255, 1)
+border_width_left = 3
+border_width_top = 3
+border_width_right = 3
+border_width_bottom = 3
+border_color = Color(0.47058824, 0.55686275, 0.63921569, 1)
+corner_radius_top_left = 8
+corner_radius_top_right = 8
+corner_radius_bottom_right = 8
+corner_radius_bottom_left = 8
+
 [sub_resource type="StyleBoxFlat" id="RoomRowHover"]
 content_margin_left = 16.0
 content_margin_top = 9.0
@@ -191,9 +207,11 @@ SlotCardEmpty/styles/panel = SubResource("SlotCardEmpty")
 RoomRow/base_type = &"Button"
 RoomRow/constants/outline_size = 0
 RoomRow/colors/font_color = Color(0.03137255, 0.21960784, 0.50196078, 1)
+RoomRow/colors/font_disabled_color = Color(0.03137255, 0.21960784, 0.50196078, 0.45)
 RoomRow/colors/font_hover_color = Color(0.03137255, 0.21960784, 0.50196078, 1)
 RoomRow/colors/font_pressed_color = Color(0.03137255, 0.21960784, 0.50196078, 1)
 RoomRow/font_sizes/font_size = 22
+RoomRow/styles/disabled = SubResource("RoomRowDisabled")
 RoomRow/styles/focus = SubResource("Empty")
 RoomRow/styles/hover = SubResource("RoomRowHover")
 RoomRow/styles/normal = SubResource("RoomRowNormal")

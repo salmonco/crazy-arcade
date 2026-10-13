@@ -47,6 +47,8 @@ func _empty_seat_number() -> int:
 	return number
 
 func game_start() -> void:
+	if _battle != null or not can_game_start():
+		return
 	var map := Map.new()
 	for character in _characters:
 		character.continuous_position = Map.SEAT_START_CELLS[character.number - 1]
@@ -91,6 +93,10 @@ func get_battle() -> Battle:
 	return _battle
 
 func set_battle_mode(mode: StringName) -> void:
+	if mode == battle_mode or _battle != null:
+		return
+	if mode == BattleMode.MONSTER and is_full():
+		return
 	battle_mode = mode
 	if mode == BattleMode.MONSTER:
 		_add_npc()
@@ -99,6 +105,8 @@ func set_battle_mode(mode: StringName) -> void:
 			_remove_npcs()
 
 func remove_character(character: Character) -> void:
+	if _battle != null and character in _battle.get_map().characters():
+		_battle.get_map().let_character_out(character)
 	_characters.erase(character)
 	character.joined_room_id = ""
 
@@ -108,8 +116,30 @@ func characters() -> Array[Character]:
 func team_count() -> int:
 	return Team.colors(_characters).size()
 
+static func capacity() -> int:
+	return Map.SEAT_START_CELLS.size()
+
+func is_full() -> bool:
+	return _characters.size() >= capacity()
+
+func status() -> StringName:
+	if _battle != null:
+		return RoomStatus.PLAYING
+	if is_full():
+		return RoomStatus.FULL
+	return RoomStatus.WAITING
+
+func can_enter() -> bool:
+	return status() == RoomStatus.WAITING
+
 func can_game_start() -> bool:
 	return team_count() >= MINIMUM_TEAM_COUNT_TO_START_BATTLE
+
+func is_empty() -> bool:
+	for character in _characters:
+		if character is not Npc:
+			return false
+	return true
 
 func has_npc() -> bool:
 	for character in _characters:

@@ -7,6 +7,10 @@ const MODE_NAMES: Dictionary[StringName, String] = {
 	BattleMode.MONSTER: "협공배틀",
 	BattleMode.LOCAL_MULTI: "로컬멀티",
 }
+const STATUS_NAMES: Dictionary[StringName, String] = {
+	RoomStatus.PLAYING: "게임 중",
+	RoomStatus.FULL: "꽉 참",
+}
 
 signal room_chosen(room_id: String)
 
@@ -38,8 +42,11 @@ func _create_room_entry(room: Dictionary) -> Button:
 	entry.text = "방 %s\n%d / %d  ·  %s" % [
 		room["id"].substr(0, ROOM_ID_DIGITS),
 		room["character_count"],
-		Map.SEAT_START_CELLS.size(),
+		Room.capacity(),
 		MODE_NAMES.get(room["mode"]),
 	]
+	if room["status"] in STATUS_NAMES:
+		entry.text += "  ·  %s" % STATUS_NAMES[room["status"]]
+	entry.disabled = room["status"] != RoomStatus.WAITING
 	entry.pressed.connect(room_chosen.emit.bind(room.id))
 	return entry

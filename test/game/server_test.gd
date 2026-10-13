@@ -9,6 +9,10 @@ func before_test() -> void:
 	_runner = scene_runner(SCENE_PATH)
 	_server = _runner.scene()
 
+func _connect(peer_id: int, color: Color = Color.RED) -> void:
+	_server.on_peer_connected(peer_id)
+	_server.lobby.find_character(peer_id).color = color
+
 func test_서버가_로비를_갖고_있다() -> void:
 	assert_that(_server.lobby).is_not_null()
 
@@ -80,10 +84,10 @@ func test_피어가_방에_입장한_상태인데_접속을_끊으면_방과_로
 	_server.on_peer_connected(peer_id)
 	var room := _server.create_room()
 	_server.enter_room(room.id, peer_id)
-	assert_that(_server.lobby.find_room(room.id).find_character(peer_id)).is_not_null()
+	assert_that(room.find_character(peer_id)).is_not_null()
 	assert_that(_server.lobby.find_character(peer_id)).is_not_null()
 	_server.on_peer_disconnected(peer_id)
-	assert_that(_server.lobby.find_room(room.id).find_character(peer_id)).is_null()
+	assert_that(room.find_character(peer_id)).is_null()
 	assert_that(_server.lobby.find_character(peer_id)).is_null()
 
 func test_피어가_접속하고_방에_입장해도_로비엔_해당_피어의_캐릭터가_남아있다() -> void:
@@ -99,6 +103,8 @@ func test_배틀을_시작할_수_있다() -> void:
 	_server.on_peer_connected(peer_id)
 	var room := _server.create_room()
 	_server.enter_room(room.id, peer_id)
+	_connect(99, Color.GREEN)
+	_server.enter_room(room.id, 99)
 	assert_that(room.get_battle()).is_null()
 	_server.start_battle(peer_id)
 	assert_that(room.get_battle()).is_not_null()
@@ -108,6 +114,8 @@ func test_배틀을_종료할_수_있다() -> void:
 	_server.on_peer_connected(peer_id)
 	var room := _server.create_room()
 	_server.enter_room(room.id, peer_id)
+	_connect(99, Color.GREEN)
+	_server.enter_room(room.id, 99)
 	_server.start_battle(peer_id)
 	assert_that(room.get_battle()).is_not_null()
 	_server.finish_battle(peer_id)
@@ -134,8 +142,8 @@ func test_몬스터_모드를_활성화하면_방에_NPC가_생긴다() -> void:
 # tick
 func test_서버가_시간을_흘리면_방의_배틀이_흐른다() -> void:
 	var room := _server.create_room()
-	_server.on_peer_connected(11)
-	_server.on_peer_connected(22)
+	_connect(11)
+	_connect(22, Color.GREEN)
 	_server.enter_room(room.id, 11)
 	_server.enter_room(room.id, 22)
 	_server.start_battle(11)
@@ -150,8 +158,8 @@ func test_서버가_시간을_흘리면_방의_배틀이_흐른다() -> void:
 # 입력
 func _battle_room_with_two_peers() -> Room:
 	var room := _server.create_room()
-	_server.on_peer_connected(11)
-	_server.on_peer_connected(22)
+	_connect(11)
+	_connect(22, Color.GREEN)
 	_server.enter_room(room.id, 11)
 	_server.enter_room(room.id, 22)
 	_server.start_battle(11)
@@ -193,6 +201,8 @@ func _two_rooms_two_peers() -> Array[Room]:
 	_server.on_peer_connected(22)
 	_server.enter_room(other.id, 22)
 	_server.enter_room(mine.id, 11)
+	_connect(33, Color.GREEN)
+	_server.enter_room(mine.id, 33)
 	return [mine, other]
 
 func test_배틀은_그_피어가_있는_방에서만_시작된다() -> void:
@@ -248,3 +258,167 @@ func test_캐릭터의_색상을_변경할_수_있다() -> void:
 	assert_that(_server.lobby.find_character(11).color).is_equal(Color.ORANGE)
 	_server.set_character_color(1, Color.GREEN, 11)
 	assert_that(_server.lobby.find_character(11).color).is_equal(Color.GREEN)
+
+# 정원
+const HOST := 100
+
+func _full_room_of_peers() -> Room:
+	var room := _server.create_room()
+	for i in Room.capacity():
+		_server.on_peer_connected(HOST + i)
+		_server.enter_room(room.id, HOST + i)
+	return room
+
+func test_꽉_찬_방에서는_로컬_멀티를_켜도_2P가_생기지_않는다() -> void:
+	var room := _full_room_of_peers()
+	_server.set_local_multi(true, HOST)
+	assert_that(room.find_2p(HOST)).is_null()
+	assert_int(room.characters().size()).is_equal(Room.capacity())
+
+func test_꽉_찬_방에서는_몬스터_모드로_바꿀_수_없다() -> void:
+	var room := _full_room_of_peers()
+	_server.set_monster_mode(true, HOST)
+	assert_bool(room.has_npc()).is_false()
+	assert_that(room.battle_mode).is_equal(BattleMode.LOCAL_MULTI)
+	assert_int(room.characters().size()).is_equal(Room.capacity())
+
+# 중복 요청
+func _npc_count(room: Room) -> int:
+	return room.characters().filter(func(character): return character is Npc).size()
+
+func test_두_피어가_연달아_몬스터_모드를_켜도_NPC는_하나다() -> void:
+	var room := _server.create_room()
+	for peer_id in [11, 22]:
+		_server.on_peer_connected(peer_id)
+		_server.enter_room(room.id, peer_id)
+	_server.set_monster_mode(true, 11)
+	_server.set_monster_mode(true, 22)
+	assert_int(_npc_count(room)).is_equal(1)
+	assert_int(room.characters().size()).is_equal(3)
+
+func test_몬스터_모드를_껐다가_다시_켜면_NPC가_다시_들어온다() -> void:
+	var room := _server.create_room()
+	_server.on_peer_connected(11)
+	_server.enter_room(room.id, 11)
+	_server.set_monster_mode(true, 11)
+	_server.set_monster_mode(false, 11)
+	_server.set_monster_mode(true, 11)
+	assert_int(_npc_count(room)).is_equal(1)
+
+func test_배틀_중에_시작_요청이_또_오면_무시한다() -> void:
+	var room := _battle_room_with_two_peers()
+	var running := room.get_battle()
+	assert_that(running).is_not_null()
+	_server.start_battle(22)
+	assert_that(room.get_battle()).is_same(running)
+
+func test_배틀이_끝난_뒤에는_다시_시작할_수_있다() -> void:
+	var room := _battle_room_with_two_peers()
+	var finished := room.get_battle()
+	_server.finish_battle(11)
+	_server.start_battle(22)
+	assert_that(room.get_battle()).is_not_null()
+	assert_that(room.get_battle()).is_not_same(finished)
+
+func test_한_팀뿐인_방에서는_배틀이_시작되지_않는다() -> void:
+	var room := _server.create_room()
+	for peer_id in [11, 22]:
+		_connect(peer_id, Color.RED)
+		_server.enter_room(room.id, peer_id)
+	_server.start_battle(11)
+	assert_that(room.get_battle()).is_null()
+
+func test_혼자라도_몬스터_모드면_배틀이_시작된다() -> void:
+	var room := _server.create_room()
+	_connect(11)
+	_server.enter_room(room.id, 11)
+	_server.set_monster_mode(true, 11)
+	_server.start_battle(11)
+	assert_that(room.get_battle()).is_not_null()
+
+# 배틀 중 설정 변경
+func _monster_battle_room() -> Room:
+	var room := _server.create_room()
+	_connect(11)
+	_server.enter_room(room.id, 11)
+	_server.set_monster_mode(true, 11)
+	_server.start_battle(11)
+	return room
+
+func _npc_count_in_battle(room: Room) -> int:
+	return room.get_battle().get_map().characters().filter(func(character): return character is Npc).size()
+
+func test_배틀_중에는_색을_바꿔도_팀이_그대로다() -> void:
+	var room := _battle_room_with_two_peers()
+	_server.set_character_color(1, Color.GREEN, 11)
+	assert_that(_server.lobby.find_character(11).color).is_equal(Color.RED)
+	_server.tick(0.1)
+	assert_bool(room.get_battle().is_game_over()).is_false()
+
+func test_배틀_중에는_로컬_멀티를_켜도_2P가_생기지_않는다() -> void:
+	var room := _battle_room_with_two_peers()
+	_server.set_local_multi(true, 11)
+	assert_that(room.find_2p(11)).is_null()
+	assert_int(room.characters().size()).is_equal(2)
+
+func test_배틀_중에는_로컬_멀티를_꺼도_2P가_남는다() -> void:
+	var room := _server.create_room()
+	_connect(11)
+	_connect(22, Color.GREEN)
+	_server.enter_room(room.id, 11)
+	_server.enter_room(room.id, 22)
+	_server.set_local_multi(true, 11)
+	_server.start_battle(11)
+	var second_player := room.find_2p(11)
+	assert_that(second_player).is_not_null()
+	_server.set_local_multi(false, 11)
+	assert_that(room.find_2p(11)).is_same(second_player)
+	assert_bool(room.get_battle().get_map().characters().has(second_player)).is_true()
+
+func test_배틀_중에는_몬스터_모드를_켜도_NPC가_생기지_않는다() -> void:
+	var room := _battle_room_with_two_peers()
+	_server.set_monster_mode(true, 11)
+	assert_bool(room.has_npc()).is_false()
+	assert_that(room.battle_mode).is_equal(BattleMode.LOCAL_MULTI)
+
+func test_배틀_중에는_몬스터_모드를_꺼도_NPC가_남는다() -> void:
+	var room := _monster_battle_room()
+	assert_int(_npc_count_in_battle(room)).is_equal(1)
+	_server.set_monster_mode(false, 11)
+	assert_bool(room.has_npc()).is_true()
+	assert_that(room.battle_mode).is_equal(BattleMode.MONSTER)
+	assert_int(_npc_count_in_battle(room)).is_equal(1)
+
+# 방 만들기
+func test_방을_만든_피어는_그_방에_들어가_있다() -> void:
+	_connect(11)
+	var room: Room = _server.create_room_and_enter(11)
+	assert_that(_server.lobby.room_of(11)).is_same(room)
+	assert_int(room.characters().size()).is_equal(1)
+	assert_that(_server.lobby.snapshot_for(11)["screen"]).is_equal(Screen.ROOM)
+
+func test_방에_있는_피어는_방을_만들지_못한다() -> void:
+	var joined := _server.create_room()
+	_connect(11)
+	_server.enter_room(joined.id, 11)
+	assert_that(_server.create_room_and_enter(11)).is_null()
+	assert_int(_server.lobby.room_count()).is_equal(1)
+	assert_that(_server.lobby.room_of(11)).is_same(joined)
+
+func test_로비에_없는_피어가_방을_만들면_방이_생기지_않는다() -> void:
+	assert_that(_server.create_room_and_enter(11)).is_null()
+	assert_int(_server.lobby.room_count()).is_equal(0)
+
+func test_배틀이_끝나는_프레임에는_로비에_있는_피어에게도_보낸다() -> void:
+	var room := _battle_room_with_two_peers()
+	_connect(33)
+	room.get_battle().get_map().let_character_out(room.characters()[1])
+	var step := Battle.GAME_OVER_AFTER_SECOND * 0.6
+	_server.tick(step)
+	_server.tick(step)
+	assert_array(_server.tick(step, [11, 22, 33])).contains_exactly_in_any_order([11, 22, 33])
+
+func test_배틀이_이어지는_동안에는_로비에_있는_피어에게_보내지_않는다() -> void:
+	_battle_room_with_two_peers()
+	_connect(33)
+	assert_array(_server.tick(0.1, [11, 22, 33])).contains_exactly_in_any_order([11, 22])

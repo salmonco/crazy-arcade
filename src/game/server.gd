@@ -16,6 +16,9 @@ func _process(delta: float) -> void:
 func tick(delta: float, peer_ids: Array = []) -> Array:
 	var battle_rooms := lobby.rooms_in_battle()
 	lobby.tick(delta)
+	for room in battle_rooms:
+		if room.get_battle() == null:
+			return peer_ids
 	return peers_in_rooms(peer_ids, battle_rooms)
 
 func _create_peer() -> void:
@@ -45,7 +48,7 @@ func on_peer_disconnected(id: int) -> void:
 
 @rpc("any_peer", "call_remote", "reliable")
 func request_create_room() -> void:
-	create_room()
+	create_room_and_enter(multiplayer.get_remote_sender_id())
 	_broadcast()
 
 @rpc("any_peer", "call_remote", "reliable")
@@ -93,6 +96,14 @@ func screen_changed(_snapshot: Dictionary) -> void:
 func create_room() -> Room:
 	return lobby.create_room()
 
+func create_room_and_enter(peer_id: int) -> Room:
+	var character := lobby.find_character(peer_id)
+	if character == null or character.joined_room_id != "":
+		return null
+	var room := create_room()
+	enter_room(room.id, peer_id)
+	return room
+
 func enter_room(room_id: String, peer_id: int) -> void:
 	lobby.enter_room(room_id, peer_id)
 
@@ -116,11 +127,11 @@ func finish_battle(peer_id: int) -> void:
 
 func set_local_multi(enabled: bool, peer_id: int) -> void:
 	var room := lobby.room_of(peer_id)
-	if room == null:
+	if room == null or room.get_battle() != null:
 		return
 	var second_player := room.find_2p(peer_id)
 	if enabled:
-		if second_player != null:
+		if second_player != null or room.is_full():
 			return
 		var new_2p = Character.new(Vector2i.ZERO, 2, _second_player_color(room.battle_mode), peer_id, true)
 		room.add_character(new_2p)
@@ -151,6 +162,9 @@ func place_water_balloon(number: int, peer_id: int) -> void:
 	room.place_water_balloon(peer_id, number)
 
 func set_character_color(number: int, color: Color, peer_id: int) -> void:
+	var room := lobby.room_of(peer_id)
+	if room != null and room.get_battle() != null:
+		return
 	for character in lobby.characters:
 		if character.number == number and character.id == peer_id:
 			character.color = color
