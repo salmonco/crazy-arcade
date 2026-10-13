@@ -133,6 +133,35 @@ func test_로컬_멀티에서는_몇_P가_이겼는지_적는다() -> void:
 	_render(snapshot)
 	assert_str(_battle_view.win_label.text).is_equal("2P WIN!!")
 
+# 나는 로컬 멀티로 1P(빨강)와 2P(초록)를, 다른 피어는 노랑을 조종한다.
+func _local_multi_against_other_peer_snapshot(winner: Color) -> Dictionary:
+	var snapshot := _solo_snapshot()
+	snapshot["characters"] = [_character(3, Vector2(7, 11), Color.YELLOW)]
+	snapshot["seats"] = [
+		_seat(1, Color.RED, MY_PEER, false, true),
+		_seat(2, Color.GREEN, MY_PEER, false, true),
+		_seat(3, Color.YELLOW, OTHER_PEER),
+	]
+	snapshot["winner_color"] = winner
+	return snapshot
+
+func test_로컬_멀티에서_다른_피어가_이기면_LOSE를_표시한다() -> void:
+	_render(_local_multi_against_other_peer_snapshot(Color.YELLOW))
+	assert_bool(_battle_view.win_label.visible).is_false()
+	assert_bool(_battle_view.lose_label.visible).is_true()
+
+func test_다른_피어가_있어도_로컬_멀티에서_내_1P가_이기면_1P_WIN을_표시한다() -> void:
+	_render(_local_multi_against_other_peer_snapshot(Color.RED))
+	assert_bool(_battle_view.win_label.visible).is_true()
+	assert_str(_battle_view.win_label.text).is_equal("1P WIN!!")
+	assert_bool(_battle_view.lose_label.visible).is_false()
+
+func test_다른_피어가_있어도_로컬_멀티에서_내_2P가_이기면_2P_WIN을_표시한다() -> void:
+	_render(_local_multi_against_other_peer_snapshot(Color.GREEN))
+	assert_bool(_battle_view.win_label.visible).is_true()
+	assert_str(_battle_view.win_label.text).is_equal("2P WIN!!")
+	assert_bool(_battle_view.lose_label.visible).is_false()
+
 func test_무승부면_무승부_라벨만_보인다() -> void:
 	var snapshot := _solo_snapshot()
 	snapshot["is_draw"] = true
