@@ -91,7 +91,9 @@ func get_battle() -> Battle:
 	return _battle
 
 func set_battle_mode(mode: StringName) -> void:
-	if mode == BattleMode.MONSTER and not has_npc() and is_full():
+	if mode == battle_mode:
+		return
+	if mode == BattleMode.MONSTER and is_full():
 		return
 	battle_mode = mode
 	if mode == BattleMode.MONSTER:

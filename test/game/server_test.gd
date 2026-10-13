@@ -271,3 +271,26 @@ func test_꽉_찬_방에서는_몬스터_모드로_바꿀_수_없다() -> void:
 	assert_bool(room.has_npc()).is_false()
 	assert_that(room.battle_mode).is_equal(BattleMode.LOCAL_MULTI)
 	assert_int(room.characters().size()).is_equal(Room.capacity())
+
+# 중복 요청
+func _npc_count(room: Room) -> int:
+	return room.characters().filter(func(character): return character is Npc).size()
+
+func test_두_피어가_연달아_몬스터_모드를_켜도_NPC는_하나다() -> void:
+	var room := _server.create_room()
+	for peer_id in [11, 22]:
+		_server.on_peer_connected(peer_id)
+		_server.enter_room(room.id, peer_id)
+	_server.set_monster_mode(true, 11)
+	_server.set_monster_mode(true, 22)
+	assert_int(_npc_count(room)).is_equal(1)
+	assert_int(room.characters().size()).is_equal(3)
+
+func test_몬스터_모드를_껐다가_다시_켜면_NPC가_다시_들어온다() -> void:
+	var room := _server.create_room()
+	_server.on_peer_connected(11)
+	_server.enter_room(room.id, 11)
+	_server.set_monster_mode(true, 11)
+	_server.set_monster_mode(false, 11)
+	_server.set_monster_mode(true, 11)
+	assert_int(_npc_count(room)).is_equal(1)
