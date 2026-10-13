@@ -307,3 +307,13 @@ func test_다른_방에_있다가_배틀_중인_방에_입장하려_하면_원�
 	lobby.enter_room(waiting.id, 33)
 	lobby.enter_room(playing.id, 33)
 	assert_that(lobby.room_of(33)).is_equal(waiting)
+
+func test_배틀_중_나간_캐릭터는_남은_피어의_화면에서_사라진다() -> void:
+	var lobby := Lobby.new()
+	var room := _room_with_two_peers(lobby)
+	room.game_start()
+	lobby.leave_room(room.id, 22)
+	var drawn_numbers := []
+	for character in lobby.snapshot_for(11)["battle"]["characters"]:
+		drawn_numbers.append(character["number"])
+	assert_array(drawn_numbers).is_equal([1])
