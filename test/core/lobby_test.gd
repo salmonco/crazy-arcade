@@ -227,3 +227,54 @@ func test_배틀이_끝나면_그_방은_목록에서_빠진다() -> void:
 	assert_int(lobby.rooms_in_battle().size()).is_equal(1)
 	room.game_over()
 	assert_array(lobby.rooms_in_battle()).is_empty()
+
+# 배틀 중 퇴장
+func test_배틀_중_상대_팀이_모두_나가면_남은_팀이_이긴다() -> void:
+	var lobby := Lobby.new()
+	var room := _room_with_two_peers(lobby)
+	room.game_start()
+	lobby.leave_room(room.id, 22)
+	lobby.tick(0.1)
+	assert_that(room.get_battle().winner).is_equal(Color.RED)
+
+func test_배틀_중_한_명이_나가도_두_팀_이상_남으면_계속한다() -> void:
+	var lobby := Lobby.new()
+	var room := _room_with_two_peers(lobby)
+	_add_character(lobby, 33, Color.GREEN)
+	lobby.enter_room(room.id, 33)
+	room.game_start()
+	lobby.leave_room(room.id, 33)
+	lobby.tick(0.1)
+	assert_bool(room.get_battle().is_game_over()).is_false()
+
+func test_배틀_중_로컬_멀티_피어가_나가면_2P도_함께_빠진다() -> void:
+	var lobby := Lobby.new()
+	var room := _room_with_two_peers(lobby)
+	room.add_character(Character.new(Vector2i.ZERO, 0, Color.YELLOW, 11, true))
+	room.game_start()
+	lobby.leave_room(room.id, 11)
+	lobby.tick(0.1)
+	assert_that(room.get_battle().winner).is_equal(Color.GREEN)
+
+func test_배틀_중_모두_나가면_방이_배틀에서_풀려난다() -> void:
+	var lobby := Lobby.new()
+	var room := _room_with_two_peers(lobby)
+	room.game_start()
+	lobby.leave_room(room.id, 11)
+	lobby.leave_room(room.id, 22)
+	var step := Battle.GAME_OVER_AFTER_SECOND * 0.6
+	lobby.tick(step) # 승부 판정
+	lobby.tick(step)
+	lobby.tick(step)
+	assert_that(room.get_battle()).is_null()
+
+func test_상대가_나가서_이긴_피어는_잠시_뒤_방_화면으로_돌아간다() -> void:
+	var lobby := Lobby.new()
+	var room := _room_with_two_peers(lobby)
+	room.game_start()
+	lobby.leave_room(room.id, 22)
+	var step := Battle.GAME_OVER_AFTER_SECOND * 0.6
+	lobby.tick(step) # 승부 판정
+	lobby.tick(step)
+	lobby.tick(step)
+	assert_that(lobby.snapshot_for(11)["screen"]).is_equal(Screen.ROOM)

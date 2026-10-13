@@ -99,6 +99,8 @@ func set_battle_mode(mode: StringName) -> void:
 			_remove_npcs()
 
 func remove_character(character: Character) -> void:
+	if _battle != null and character in _battle.get_map().characters():
+		_battle.get_map().let_character_out(character)
 	_characters.erase(character)
 	character.joined_room_id = ""
 
