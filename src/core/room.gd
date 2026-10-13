@@ -47,7 +47,7 @@ func _empty_seat_number() -> int:
 	return number
 
 func game_start() -> void:
-	if _battle != null:
+	if _battle != null or not can_game_start():
 		return
 	var map := Map.new()
 	for character in _characters:

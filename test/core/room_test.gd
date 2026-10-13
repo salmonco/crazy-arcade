@@ -3,9 +3,11 @@ extends GdUnitTestSuite
 func test_방에서_게임을_시작하면_방에_있는_캐릭터가_맵에_추가된다() -> void:
 	var room := Room.new()
 	var character := Character.new(Vector2i(1, 2))
+	var rival := Character.new(Vector2i(3, 4), 0, Color.GREEN)
 	room.add_character(character)
+	room.add_character(rival)
 	room.game_start()
-	assert_array(room.get_battle().get_map().characters()).is_equal([character])
+	assert_array(room.get_battle().get_map().characters()).is_equal([character, rival])
 
 func test_방에_들어온_순서대로_자리_번호를_받는다() -> void:
 	var room := Room.new()
@@ -48,7 +50,7 @@ func test_방에서_나간_캐릭터는_방에_속하지_않는다() -> void:
 func test_게임을_시작하면_자리_번호에_맞는_칸에서_시작한다() -> void:
 	var room := Room.new()
 	var first := Character.new(Vector2i(9, 9))
-	var second := Character.new(Vector2i(9, 9))
+	var second := Character.new(Vector2i(9, 9), 0, Color.GREEN)
 	room.add_character(first)
 	room.add_character(second)
 	room.game_start()
@@ -62,6 +64,7 @@ func test_방에서_배틀_모드를_변경할_수_있다() -> void:
 
 func test_게임을_시작하면_설정한_배틀_모드가_배틀에_반영된다() -> void:
 	var room := Room.new()
+	room.add_character(Character.new(Vector2i.ZERO))
 	room.set_battle_mode(BattleMode.MONSTER)
 	room.game_start()
 	assert_str(room.get_battle().get_mode()).is_equal(BattleMode.MONSTER)

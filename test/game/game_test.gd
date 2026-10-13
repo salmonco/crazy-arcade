@@ -419,5 +419,6 @@ func test_피어는_자신의_캐릭터_색상을_변경할_수_있다() -> void
 	_request_create_room_and_enter_room()
 	_request_set_character_color(1, Color.ORANGE)
 	assert_that(_slot_color(0)).is_equal(Color.ORANGE)
+	_request_set_monster_mode(true)
 	_request_start_battle()
 	assert_that(_character_color_in_battle(1)).is_equal(Color.ORANGE)

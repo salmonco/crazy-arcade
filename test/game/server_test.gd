@@ -9,6 +9,10 @@ func before_test() -> void:
 	_runner = scene_runner(SCENE_PATH)
 	_server = _runner.scene()
 
+func _connect(peer_id: int, color: Color = Color.RED) -> void:
+	_server.on_peer_connected(peer_id)
+	_server.lobby.find_character(peer_id).color = color
+
 func test_서버가_로비를_갖고_있다() -> void:
 	assert_that(_server.lobby).is_not_null()
 
@@ -99,6 +103,8 @@ func test_배틀을_시작할_수_있다() -> void:
 	_server.on_peer_connected(peer_id)
 	var room := _server.create_room()
 	_server.enter_room(room.id, peer_id)
+	_connect(99, Color.GREEN)
+	_server.enter_room(room.id, 99)
 	assert_that(room.get_battle()).is_null()
 	_server.start_battle(peer_id)
 	assert_that(room.get_battle()).is_not_null()
@@ -108,6 +114,8 @@ func test_배틀을_종료할_수_있다() -> void:
 	_server.on_peer_connected(peer_id)
 	var room := _server.create_room()
 	_server.enter_room(room.id, peer_id)
+	_connect(99, Color.GREEN)
+	_server.enter_room(room.id, 99)
 	_server.start_battle(peer_id)
 	assert_that(room.get_battle()).is_not_null()
 	_server.finish_battle(peer_id)
@@ -134,8 +142,8 @@ func test_몬스터_모드를_활성화하면_방에_NPC가_생긴다() -> void:
 # tick
 func test_서버가_시간을_흘리면_방의_배틀이_흐른다() -> void:
 	var room := _server.create_room()
-	_server.on_peer_connected(11)
-	_server.on_peer_connected(22)
+	_connect(11)
+	_connect(22, Color.GREEN)
 	_server.enter_room(room.id, 11)
 	_server.enter_room(room.id, 22)
 	_server.start_battle(11)
@@ -150,8 +158,8 @@ func test_서버가_시간을_흘리면_방의_배틀이_흐른다() -> void:
 # 입력
 func _battle_room_with_two_peers() -> Room:
 	var room := _server.create_room()
-	_server.on_peer_connected(11)
-	_server.on_peer_connected(22)
+	_connect(11)
+	_connect(22, Color.GREEN)
 	_server.enter_room(room.id, 11)
 	_server.enter_room(room.id, 22)
 	_server.start_battle(11)
@@ -193,6 +201,8 @@ func _two_rooms_two_peers() -> Array[Room]:
 	_server.on_peer_connected(22)
 	_server.enter_room(other.id, 22)
 	_server.enter_room(mine.id, 11)
+	_connect(33, Color.GREEN)
+	_server.enter_room(mine.id, 33)
 	return [mine, other]
 
 func test_배틀은_그_피어가_있는_방에서만_시작된다() -> void:
@@ -298,6 +308,7 @@ func test_몬스터_모드를_껐다가_다시_켜면_NPC가_다시_들어온다
 func test_배틀_중에_시작_요청이_또_오면_무시한다() -> void:
 	var room := _battle_room_with_two_peers()
 	var running := room.get_battle()
+	assert_that(running).is_not_null()
 	_server.start_battle(22)
 	assert_that(room.get_battle()).is_same(running)
 
@@ -308,3 +319,19 @@ func test_배틀이_끝난_뒤에는_다시_시작할_수_있다() -> void:
 	_server.start_battle(22)
 	assert_that(room.get_battle()).is_not_null()
 	assert_that(room.get_battle()).is_not_same(finished)
+
+func test_한_팀뿐인_방에서는_배틀이_시작되지_않는다() -> void:
+	var room := _server.create_room()
+	for peer_id in [11, 22]:
+		_connect(peer_id, Color.RED)
+		_server.enter_room(room.id, peer_id)
+	_server.start_battle(11)
+	assert_that(room.get_battle()).is_null()
+
+func test_혼자라도_몬스터_모드면_배틀이_시작된다() -> void:
+	var room := _server.create_room()
+	_connect(11)
+	_server.enter_room(room.id, 11)
+	_server.set_monster_mode(true, 11)
+	_server.start_battle(11)
+	assert_that(room.get_battle()).is_not_null()
