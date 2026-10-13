@@ -16,6 +16,9 @@ func _process(delta: float) -> void:
 func tick(delta: float, peer_ids: Array = []) -> Array:
 	var battle_rooms := lobby.rooms_in_battle()
 	lobby.tick(delta)
+	for room in battle_rooms:
+		if room.get_battle() == null:
+			return peer_ids
 	return peers_in_rooms(peer_ids, battle_rooms)
 
 func _create_peer() -> void:

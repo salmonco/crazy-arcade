@@ -408,3 +408,17 @@ func test_방에_있는_피어는_방을_만들지_못한다() -> void:
 func test_로비에_없는_피어가_방을_만들면_방이_생기지_않는다() -> void:
 	assert_that(_server.create_room_and_enter(11)).is_null()
 	assert_int(_server.lobby.room_count()).is_equal(0)
+
+func test_배틀이_끝나는_프레임에는_로비에_있는_피어에게도_보낸다() -> void:
+	var room := _battle_room_with_two_peers()
+	_connect(33)
+	room.get_battle().get_map().let_character_out(room.characters()[1])
+	var step := Battle.GAME_OVER_AFTER_SECOND * 0.6
+	_server.tick(step)
+	_server.tick(step)
+	assert_array(_server.tick(step, [11, 22, 33])).contains_exactly_in_any_order([11, 22, 33])
+
+func test_배틀이_이어지는_동안에는_로비에_있는_피어에게_보내지_않는다() -> void:
+	_battle_room_with_two_peers()
+	_connect(33)
+	assert_array(_server.tick(0.1, [11, 22, 33])).contains_exactly_in_any_order([11, 22])
