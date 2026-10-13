@@ -35,11 +35,7 @@ func find_character(peer_id: int) -> Character:
 
 func enter_room(room_id: String, peer_id: int) -> bool:
 	var room := find_room(room_id)
-	if room == null:
-		return false
-	if room.get_battle() != null:
-		return false
-	if room.is_full():
+	if room == null or not room.can_enter():
 		return false
 	var character := find_character(peer_id)
 	if character == null:
@@ -81,7 +77,8 @@ func snapshot() -> Dictionary:
 		rooms_snapshot.append({
 			"id": room.id,
 			"character_count": room.characters().size(),
-			"mode": room.battle_mode
+			"mode": room.battle_mode,
+			"can_enter": room.can_enter(),
 		})
 	return { "rooms": rooms_snapshot }
 

@@ -122,6 +122,9 @@ static func capacity() -> int:
 func is_full() -> bool:
 	return _characters.size() >= capacity()
 
+func can_enter() -> bool:
+	return _battle == null and not is_full()
+
 func can_game_start() -> bool:
 	return team_count() >= MINIMUM_TEAM_COUNT_TO_START_BATTLE
 

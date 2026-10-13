@@ -12,8 +12,8 @@ func before_test() -> void:
 func _snapshot() -> Dictionary:
 	return {
 		"rooms": [
-			{"id": "alpha-11112222", "character_count": 1, "mode": BattleMode.LOCAL_MULTI},
-			{"id": "bravo-33334444", "character_count": 3, "mode": BattleMode.MONSTER},
+			{"id": "alpha-11112222", "character_count": 1, "mode": BattleMode.LOCAL_MULTI, "can_enter": true},
+			{"id": "bravo-33334444", "character_count": 3, "mode": BattleMode.MONSTER, "can_enter": false},
 		]
 	}
 
@@ -42,3 +42,8 @@ func test_RPC를_전달된_스냅샷으로도_모드_이름을_찾는다() -> vo
 	var wired: Dictionary = bytes_to_var(var_to_bytes(_snapshot()))
 	_lobby_view.render(wired)
 	assert_str(_lobby_view.room_entry(1).text).is_equal("방 bravo-33\n3 / 4  ·  협공배틀")
+
+func test_들어갈_수_없는_방_항목은_누를_수_없다() -> void:
+	_lobby_view.render(_snapshot())
+	assert_bool(_lobby_view.room_entry(0).disabled).is_false()
+	assert_bool(_lobby_view.room_entry(1).disabled).is_true()

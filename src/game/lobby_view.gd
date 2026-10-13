@@ -38,8 +38,9 @@ func _create_room_entry(room: Dictionary) -> Button:
 	entry.text = "방 %s\n%d / %d  ·  %s" % [
 		room["id"].substr(0, ROOM_ID_DIGITS),
 		room["character_count"],
-		Map.SEAT_START_CELLS.size(),
+		Room.capacity(),
 		MODE_NAMES.get(room["mode"]),
 	]
+	entry.disabled = not room["can_enter"]
 	entry.pressed.connect(room_chosen.emit.bind(room.id))
 	return entry
