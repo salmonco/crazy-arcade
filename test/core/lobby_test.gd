@@ -278,3 +278,32 @@ func test_상대가_나가서_이긴_피어는_잠시_뒤_방_화면으로_돌�
 	lobby.tick(step)
 	lobby.tick(step)
 	assert_that(lobby.snapshot_for(11)["screen"]).is_equal(Screen.ROOM)
+
+# 배틀 중 입장
+func test_배틀_중인_방에는_입장하지_못한다() -> void:
+	var lobby := Lobby.new()
+	var room := _room_with_two_peers(lobby)
+	room.game_start()
+	_add_character(lobby, 33, Color.BLUE)
+	assert_bool(lobby.enter_room(room.id, 33)).is_false()
+	assert_int(room.characters().size()).is_equal(2)
+	assert_that(lobby.snapshot_for(33)["screen"]).is_equal(Screen.LOBBY)
+
+func test_배틀이_끝난_방에는_다시_입장할_수_있다() -> void:
+	var lobby := Lobby.new()
+	var room := _room_with_two_peers(lobby)
+	room.game_start()
+	room.game_over()
+	_add_character(lobby, 33, Color.BLUE)
+	assert_bool(lobby.enter_room(room.id, 33)).is_true()
+	assert_int(room.characters().size()).is_equal(3)
+
+func test_다른_방에_있다가_배틀_중인_방에_입장하려_하면_원래_방에_남는다() -> void:
+	var lobby := Lobby.new()
+	var playing := _room_with_two_peers(lobby)
+	playing.game_start()
+	var waiting := lobby.create_room()
+	_add_character(lobby, 33, Color.BLUE)
+	lobby.enter_room(waiting.id, 33)
+	lobby.enter_room(playing.id, 33)
+	assert_that(lobby.room_of(33)).is_equal(waiting)

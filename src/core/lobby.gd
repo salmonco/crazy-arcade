@@ -37,6 +37,8 @@ func enter_room(room_id: String, peer_id: int) -> bool:
 	var room := find_room(room_id)
 	if room == null:
 		return false
+	if room.get_battle() != null:
+		return false
 	var character := find_character(peer_id)
 	if character == null:
 		return false
