@@ -335,3 +335,56 @@ func test_혼자라도_몬스터_모드면_배틀이_시작된다() -> void:
 	_server.set_monster_mode(true, 11)
 	_server.start_battle(11)
 	assert_that(room.get_battle()).is_not_null()
+
+# 배틀 중 설정 변경
+func _monster_battle_room() -> Room:
+	var room := _server.create_room()
+	_connect(11)
+	_server.enter_room(room.id, 11)
+	_server.set_monster_mode(true, 11)
+	_server.start_battle(11)
+	return room
+
+func _npc_count_in_battle(room: Room) -> int:
+	return room.get_battle().get_map().characters().filter(func(character): return character is Npc).size()
+
+func test_배틀_중에는_색을_바꿔도_팀이_그대로다() -> void:
+	var room := _battle_room_with_two_peers()
+	_server.set_character_color(1, Color.GREEN, 11)
+	assert_that(_server.lobby.find_character(11).color).is_equal(Color.RED)
+	_server.tick(0.1)
+	assert_bool(room.get_battle().is_game_over()).is_false()
+
+func test_배틀_중에는_로컬_멀티를_켜도_2P가_생기지_않는다() -> void:
+	var room := _battle_room_with_two_peers()
+	_server.set_local_multi(true, 11)
+	assert_that(room.find_2p(11)).is_null()
+	assert_int(room.characters().size()).is_equal(2)
+
+func test_배틀_중에는_로컬_멀티를_꺼도_2P가_남는다() -> void:
+	var room := _server.create_room()
+	_connect(11)
+	_connect(22, Color.GREEN)
+	_server.enter_room(room.id, 11)
+	_server.enter_room(room.id, 22)
+	_server.set_local_multi(true, 11)
+	_server.start_battle(11)
+	var second_player := room.find_2p(11)
+	assert_that(second_player).is_not_null()
+	_server.set_local_multi(false, 11)
+	assert_that(room.find_2p(11)).is_same(second_player)
+	assert_bool(room.get_battle().get_map().characters().has(second_player)).is_true()
+
+func test_배틀_중에는_몬스터_모드를_켜도_NPC가_생기지_않는다() -> void:
+	var room := _battle_room_with_two_peers()
+	_server.set_monster_mode(true, 11)
+	assert_bool(room.has_npc()).is_false()
+	assert_that(room.battle_mode).is_equal(BattleMode.LOCAL_MULTI)
+
+func test_배틀_중에는_몬스터_모드를_꺼도_NPC가_남는다() -> void:
+	var room := _monster_battle_room()
+	assert_int(_npc_count_in_battle(room)).is_equal(1)
+	_server.set_monster_mode(false, 11)
+	assert_bool(room.has_npc()).is_true()
+	assert_that(room.battle_mode).is_equal(BattleMode.MONSTER)
+	assert_int(_npc_count_in_battle(room)).is_equal(1)

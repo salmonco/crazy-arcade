@@ -93,7 +93,7 @@ func get_battle() -> Battle:
 	return _battle
 
 func set_battle_mode(mode: StringName) -> void:
-	if mode == battle_mode:
+	if mode == battle_mode or _battle != null:
 		return
 	if mode == BattleMode.MONSTER and is_full():
 		return

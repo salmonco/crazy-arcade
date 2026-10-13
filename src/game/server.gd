@@ -116,7 +116,7 @@ func finish_battle(peer_id: int) -> void:
 
 func set_local_multi(enabled: bool, peer_id: int) -> void:
 	var room := lobby.room_of(peer_id)
-	if room == null:
+	if room == null or room.get_battle() != null:
 		return
 	var second_player := room.find_2p(peer_id)
 	if enabled:
@@ -151,6 +151,9 @@ func place_water_balloon(number: int, peer_id: int) -> void:
 	room.place_water_balloon(peer_id, number)
 
 func set_character_color(number: int, color: Color, peer_id: int) -> void:
+	var room := lobby.room_of(peer_id)
+	if room != null and room.get_battle() != null:
+		return
 	for character in lobby.characters:
 		if character.number == number and character.id == peer_id:
 			character.color = color
