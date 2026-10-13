@@ -78,7 +78,7 @@ func snapshot() -> Dictionary:
 			"id": room.id,
 			"character_count": room.characters().size(),
 			"mode": room.battle_mode,
-			"can_enter": room.can_enter(),
+			"status": room.status(),
 		})
 	return { "rooms": rooms_snapshot }
 

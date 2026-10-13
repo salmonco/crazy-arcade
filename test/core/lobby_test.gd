@@ -81,7 +81,7 @@ func _enter_new_character(lobby: Lobby, room: Room, peer_id: int) -> void:
 	lobby.add_character(Character.new(Vector2i.ZERO, 0, Color.RED, peer_id))
 	lobby.enter_room(room.id, peer_id)
 
-func test_로비_스냅샷은_방마다_아이디와_인원수와_모드와_입장_가능_여부를_담는다() -> void:
+func test_로비_스냅샷은_방마다_아이디와_인원수와_모드와_상태를_담는다() -> void:
 	var lobby := Lobby.new()
 	var quiet_room := lobby.create_room()
 	var crowded_room := lobby.create_room()
@@ -92,8 +92,8 @@ func test_로비_스냅샷은_방마다_아이디와_인원수와_모드와_입�
 	crowded_room.set_battle_mode(BattleMode.MONSTER)
 	assert_that(lobby.snapshot()).is_equal({
 		"rooms": [
-			{"id": quiet_room.id, "character_count": 1, "mode": BattleMode.LOCAL_MULTI, "can_enter": true},
-			{"id": crowded_room.id, "character_count": 4, "mode": BattleMode.MONSTER, "can_enter": false},
+			{"id": quiet_room.id, "character_count": 1, "mode": BattleMode.LOCAL_MULTI, "status": RoomStatus.WAITING},
+			{"id": crowded_room.id, "character_count": 4, "mode": BattleMode.MONSTER, "status": RoomStatus.FULL},
 		]
 	})
 
@@ -408,22 +408,28 @@ func test_다른_방의_빈_방은_건드리지_않는다() -> void:
 	lobby.leave_room(room.id, 11)
 	assert_that(lobby.find_room(untouched.id)).is_same(untouched)
 
-# 로비 목록의 입장 가능 여부
-func _can_enter_in_snapshot(lobby: Lobby, room: Room) -> bool:
+# 로비 목록의 방 상태
+func _status_in_snapshot(lobby: Lobby, room: Room) -> StringName:
 	for entry in lobby.snapshot()["rooms"]:
 		if entry["id"] == room.id:
-			return entry["can_enter"]
-	return false
+			return entry["status"]
+	return &""
 
-func test_로비_스냅샷은_배틀_중인_방을_입장_불가로_알린다() -> void:
+func test_로비_스냅샷은_배틀_중인_방을_게임_중으로_알린다() -> void:
 	var lobby := Lobby.new()
 	var room := _room_with_two_peers(lobby)
 	room.game_start()
-	assert_bool(_can_enter_in_snapshot(lobby, room)).is_false()
+	assert_that(_status_in_snapshot(lobby, room)).is_equal(RoomStatus.PLAYING)
 
-func test_로비_스냅샷은_배틀이_끝난_방을_다시_입장_가능으로_알린다() -> void:
+func test_로비_스냅샷은_배틀이_끝난_방을_다시_대기_중으로_알린다() -> void:
 	var lobby := Lobby.new()
 	var room := _room_with_two_peers(lobby)
 	room.game_start()
 	room.game_over()
-	assert_bool(_can_enter_in_snapshot(lobby, room)).is_true()
+	assert_that(_status_in_snapshot(lobby, room)).is_equal(RoomStatus.WAITING)
+
+func test_꽉_찬_방이_배틀_중이면_게임_중으로_알린다() -> void:
+	var lobby := Lobby.new()
+	var room := _room_with_peers(lobby, Room.capacity())
+	room.game_start()
+	assert_that(_status_in_snapshot(lobby, room)).is_equal(RoomStatus.PLAYING)

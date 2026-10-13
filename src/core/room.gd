@@ -122,8 +122,15 @@ static func capacity() -> int:
 func is_full() -> bool:
 	return _characters.size() >= capacity()
 
+func status() -> StringName:
+	if _battle != null:
+		return RoomStatus.PLAYING
+	if is_full():
+		return RoomStatus.FULL
+	return RoomStatus.WAITING
+
 func can_enter() -> bool:
-	return _battle == null and not is_full()
+	return status() == RoomStatus.WAITING
 
 func can_game_start() -> bool:
 	return team_count() >= MINIMUM_TEAM_COUNT_TO_START_BATTLE
