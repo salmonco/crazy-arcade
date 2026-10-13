@@ -248,3 +248,26 @@ func test_캐릭터의_색상을_변경할_수_있다() -> void:
 	assert_that(_server.lobby.find_character(11).color).is_equal(Color.ORANGE)
 	_server.set_character_color(1, Color.GREEN, 11)
 	assert_that(_server.lobby.find_character(11).color).is_equal(Color.GREEN)
+
+# 정원
+const HOST := 100
+
+func _full_room_of_peers() -> Room:
+	var room := _server.create_room()
+	for i in Room.capacity():
+		_server.on_peer_connected(HOST + i)
+		_server.enter_room(room.id, HOST + i)
+	return room
+
+func test_꽉_찬_방에서는_로컬_멀티를_켜도_2P가_생기지_않는다() -> void:
+	var room := _full_room_of_peers()
+	_server.set_local_multi(true, HOST)
+	assert_that(room.find_2p(HOST)).is_null()
+	assert_int(room.characters().size()).is_equal(Room.capacity())
+
+func test_꽉_찬_방에서는_몬스터_모드로_바꿀_수_없다() -> void:
+	var room := _full_room_of_peers()
+	_server.set_monster_mode(true, HOST)
+	assert_bool(room.has_npc()).is_false()
+	assert_that(room.battle_mode).is_equal(BattleMode.LOCAL_MULTI)
+	assert_int(room.characters().size()).is_equal(Room.capacity())

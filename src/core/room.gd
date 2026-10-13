@@ -91,6 +91,8 @@ func get_battle() -> Battle:
 	return _battle
 
 func set_battle_mode(mode: StringName) -> void:
+	if mode == BattleMode.MONSTER and not has_npc() and is_full():
+		return
 	battle_mode = mode
 	if mode == BattleMode.MONSTER:
 		_add_npc()
@@ -109,6 +111,12 @@ func characters() -> Array[Character]:
 
 func team_count() -> int:
 	return Team.colors(_characters).size()
+
+static func capacity() -> int:
+	return Map.SEAT_START_CELLS.size()
+
+func is_full() -> bool:
+	return _characters.size() >= capacity()
 
 func can_game_start() -> bool:
 	return team_count() >= MINIMUM_TEAM_COUNT_TO_START_BATTLE

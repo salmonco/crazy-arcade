@@ -120,7 +120,7 @@ func set_local_multi(enabled: bool, peer_id: int) -> void:
 		return
 	var second_player := room.find_2p(peer_id)
 	if enabled:
-		if second_player != null:
+		if second_player != null or room.is_full():
 			return
 		var new_2p = Character.new(Vector2i.ZERO, 2, _second_player_color(room.battle_mode), peer_id, true)
 		room.add_character(new_2p)

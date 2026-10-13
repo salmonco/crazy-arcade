@@ -317,3 +317,52 @@ func test_배틀_중_나간_캐릭터는_남은_피어의_화면에서_사라진
 	for character in lobby.snapshot_for(11)["battle"]["characters"]:
 		drawn_numbers.append(character["number"])
 	assert_array(drawn_numbers).is_equal([1])
+
+# 정원
+const OUTSIDER := 999
+
+func _room_with_peers(lobby: Lobby, count: int) -> Room:
+	var room := lobby.create_room()
+	for i in count:
+		var peer_id := 100 + i
+		_add_character(lobby, peer_id, Color.RED if i % 2 == 0 else Color.GREEN)
+		lobby.enter_room(room.id, peer_id)
+	return room
+
+func test_꽉_찬_방에는_입장하지_못한다() -> void:
+	var lobby := Lobby.new()
+	var room := _room_with_peers(lobby, Room.capacity())
+	_add_character(lobby, OUTSIDER, Color.BLUE)
+	assert_bool(lobby.enter_room(room.id, OUTSIDER)).is_false()
+	assert_int(room.characters().size()).is_equal(Room.capacity())
+	assert_that(lobby.snapshot_for(OUTSIDER)["screen"]).is_equal(Screen.LOBBY)
+
+func test_정원보다_한_명_적은_방에는_입장할_수_있다() -> void:
+	var lobby := Lobby.new()
+	var room := _room_with_peers(lobby, Room.capacity() - 1)
+	_add_character(lobby, OUTSIDER, Color.BLUE)
+	assert_bool(lobby.enter_room(room.id, OUTSIDER)).is_true()
+	assert_int(room.characters().size()).is_equal(Room.capacity())
+
+func test_다른_방에_있다가_꽉_찬_방에_입장하려_하면_원래_방에_남는다() -> void:
+	var lobby := Lobby.new()
+	var full := _room_with_peers(lobby, Room.capacity())
+	var waiting := lobby.create_room()
+	_add_character(lobby, OUTSIDER, Color.BLUE)
+	lobby.enter_room(waiting.id, OUTSIDER)
+	lobby.enter_room(full.id, OUTSIDER)
+	assert_that(lobby.room_of(OUTSIDER)).is_equal(waiting)
+
+func test_몬스터_모드에서는_NPC도_자리를_차지한다() -> void:
+	var lobby := Lobby.new()
+	var room := _room_with_peers(lobby, Room.capacity() - 1)
+	room.set_battle_mode(BattleMode.MONSTER)
+	_add_character(lobby, OUTSIDER, Color.BLUE)
+	assert_bool(lobby.enter_room(room.id, OUTSIDER)).is_false()
+	assert_int(room.characters().size()).is_equal(Room.capacity())
+
+func test_꽉_찬_방에서도_배틀이_시작된다() -> void:
+	var lobby := Lobby.new()
+	var room := _room_with_peers(lobby, Room.capacity())
+	room.game_start()
+	assert_that(room.get_battle()).is_not_null()
