@@ -45,7 +45,7 @@ func on_peer_disconnected(id: int) -> void:
 
 @rpc("any_peer", "call_remote", "reliable")
 func request_create_room() -> void:
-	create_room()
+	create_room_and_enter(multiplayer.get_remote_sender_id())
 	_broadcast()
 
 @rpc("any_peer", "call_remote", "reliable")
@@ -92,6 +92,14 @@ func screen_changed(_snapshot: Dictionary) -> void:
 
 func create_room() -> Room:
 	return lobby.create_room()
+
+func create_room_and_enter(peer_id: int) -> Room:
+	var character := lobby.find_character(peer_id)
+	if character == null or character.joined_room_id != "":
+		return null
+	var room := create_room()
+	enter_room(room.id, peer_id)
+	return room
 
 func enter_room(room_id: String, peer_id: int) -> void:
 	lobby.enter_room(room_id, peer_id)

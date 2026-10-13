@@ -31,8 +31,8 @@ func _sync() -> void:
 	_game.screen_changed(_server.lobby.snapshot_for(_game.peer_id))
 
 func _request_create_room_and_enter_room() -> void:
-	var room := _server.create_room()
-	_request_enter_room(room.id)
+	_server.create_room_and_enter(_game.peer_id)
+	_sync()
 
 func _request_enter_room(room_id: String) -> void:
 	_server.enter_room(room_id, _game.peer_id)
@@ -246,7 +246,9 @@ func test_다른_방에_들어가면_몬스터_모드_체크가_그_방을_따�
 	_game.room_view.monster_mode_check.button_pressed = true
 	var current_room := _current_room()
 	assert_str(current_room.battle_mode).is_equal(BattleMode.MONSTER)
-	_request_create_room_and_enter_room()
+	var other := _server.create_room()
+	_request_enter_room(other.id)
+	assert_that(_current_room()).is_same(other)
 	assert_bool(_game.room_view.monster_mode_check.button_pressed).is_false()
 
 func test_방의_몬스터_모드_체크가_모드_변경에_연결되어_있다() -> void:

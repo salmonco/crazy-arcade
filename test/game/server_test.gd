@@ -388,3 +388,23 @@ func test_배틀_중에는_몬스터_모드를_꺼도_NPC가_남는다() -> void
 	assert_bool(room.has_npc()).is_true()
 	assert_that(room.battle_mode).is_equal(BattleMode.MONSTER)
 	assert_int(_npc_count_in_battle(room)).is_equal(1)
+
+# 방 만들기
+func test_방을_만든_피어는_그_방에_들어가_있다() -> void:
+	_connect(11)
+	var room: Room = _server.create_room_and_enter(11)
+	assert_that(_server.lobby.room_of(11)).is_same(room)
+	assert_int(room.characters().size()).is_equal(1)
+	assert_that(_server.lobby.snapshot_for(11)["screen"]).is_equal(Screen.ROOM)
+
+func test_방에_있는_피어는_방을_만들지_못한다() -> void:
+	var joined := _server.create_room()
+	_connect(11)
+	_server.enter_room(joined.id, 11)
+	assert_that(_server.create_room_and_enter(11)).is_null()
+	assert_int(_server.lobby.room_count()).is_equal(1)
+	assert_that(_server.lobby.room_of(11)).is_same(joined)
+
+func test_로비에_없는_피어가_방을_만들면_방이_생기지_않는다() -> void:
+	assert_that(_server.create_room_and_enter(11)).is_null()
+	assert_int(_server.lobby.room_count()).is_equal(0)
