@@ -294,3 +294,17 @@ func test_몬스터_모드를_껐다가_다시_켜면_NPC가_다시_들어온다
 	_server.set_monster_mode(false, 11)
 	_server.set_monster_mode(true, 11)
 	assert_int(_npc_count(room)).is_equal(1)
+
+func test_배틀_중에_시작_요청이_또_오면_무시한다() -> void:
+	var room := _battle_room_with_two_peers()
+	var running := room.get_battle()
+	_server.start_battle(22)
+	assert_that(room.get_battle()).is_same(running)
+
+func test_배틀이_끝난_뒤에는_다시_시작할_수_있다() -> void:
+	var room := _battle_room_with_two_peers()
+	var finished := room.get_battle()
+	_server.finish_battle(11)
+	_server.start_battle(22)
+	assert_that(room.get_battle()).is_not_null()
+	assert_that(room.get_battle()).is_not_same(finished)

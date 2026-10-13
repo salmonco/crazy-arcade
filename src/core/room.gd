@@ -47,6 +47,8 @@ func _empty_seat_number() -> int:
 	return number
 
 func game_start() -> void:
+	if _battle != null:
+		return
 	var map := Map.new()
 	for character in _characters:
 		character.continuous_position = Map.SEAT_START_CELLS[character.number - 1]
