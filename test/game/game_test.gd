@@ -123,13 +123,14 @@ func test_방에_입장하면_내_캐릭터가_슬롯에_보인다() -> void:
 	assert_array(current_room.characters()).is_equal([_player_character])
 	assert_int(_game.room_view.slot_count()).is_equal(1)
 
-func test_방에_있는_채로_다른_방에_들어가면_이전_방에서_빠진다() -> void:
+func test_방에_있는_채로_다른_방에는_들어가지_못한다() -> void:
 	var first_room := _room_with_characters(0)
 	var second_room := _room_with_characters(0)
 	_request_enter_room(first_room.id)
 	_request_enter_room(second_room.id)
-	assert_array(first_room.characters()).is_empty()
-	assert_array(second_room.characters()).is_equal([_player_character])
+	assert_array(first_room.characters()).is_equal([_player_character])
+	assert_array(second_room.characters()).is_empty()
+	assert_that(_current_room()).is_same(first_room)
 
 func test_방을_나갔다_다시_들어가도_내_캐릭터는_하나다() -> void:
 	_request_create_room_and_enter_room()
@@ -247,6 +248,7 @@ func test_다른_방에_들어가면_몬스터_모드_체크가_그_방을_따�
 	var current_room := _current_room()
 	assert_str(current_room.battle_mode).is_equal(BattleMode.MONSTER)
 	var other := _server.create_room()
+	_request_leave_room()
 	_request_enter_room(other.id)
 	assert_that(_current_room()).is_same(other)
 	assert_bool(_game.room_view.monster_mode_check.button_pressed).is_false()
@@ -361,10 +363,11 @@ func test_두_팀_이상이면_시작_버튼이_활성이다() -> void:
 	_request_enter_room(room.id)
 	assert_bool(_game.room_view.start_button.disabled).is_false()
 
-func test_다른_방에_들어가면_이전_방의_슬롯이_남지_않는다() -> void:
+func test_방을_나와_다른_방에_들어가면_이전_방의_슬롯이_남지_않는다() -> void:
 	var crowded_room := _room_with_characters(3)
 	var empty_room := _room_with_characters(0)
 	_request_enter_room(crowded_room.id)
+	_request_leave_room()
 	_request_enter_room(empty_room.id)
 	assert_int(_game.room_view.slot_count()).is_equal(1)
 

@@ -38,10 +38,8 @@ func enter_room(room_id: String, peer_id: int) -> bool:
 	if room == null or not room.can_enter():
 		return false
 	var character := find_character(peer_id)
-	if character == null:
+	if character == null or character.joined_room_id != "":
 		return false
-	if character.joined_room_id != "":
-		leave_room(character.joined_room_id, peer_id)
 	room.add_character(character)
 	return true
 

@@ -295,16 +295,6 @@ func test_배틀이_끝난_방에는_다시_입장할_수_있다() -> void:
 	assert_bool(lobby.enter_room(room.id, 33)).is_true()
 	assert_int(room.characters().size()).is_equal(3)
 
-func test_다른_방에_있다가_배틀_중인_방에_입장하려_하면_원래_방에_남는다() -> void:
-	var lobby := Lobby.new()
-	var playing := _room_with_two_peers(lobby)
-	playing.game_start()
-	var waiting := lobby.create_room()
-	_add_character(lobby, 33, Color.BLUE)
-	lobby.enter_room(waiting.id, 33)
-	lobby.enter_room(playing.id, 33)
-	assert_that(lobby.room_of(33)).is_equal(waiting)
-
 func test_배틀_중_나간_캐릭터는_남은_피어의_화면에서_사라진다() -> void:
 	var lobby := Lobby.new()
 	var room := _room_with_two_peers(lobby)
@@ -340,15 +330,6 @@ func test_정원보다_한_명_적은_방에는_입장할_수_있다() -> void:
 	_add_character(lobby, OUTSIDER, Color.BLUE)
 	assert_bool(lobby.enter_room(room.id, OUTSIDER)).is_true()
 	assert_int(room.characters().size()).is_equal(Room.capacity())
-
-func test_다른_방에_있다가_꽉_찬_방에_입장하려_하면_원래_방에_남는다() -> void:
-	var lobby := Lobby.new()
-	var full := _room_with_peers(lobby, Room.capacity())
-	var waiting := lobby.create_room()
-	_add_character(lobby, OUTSIDER, Color.BLUE)
-	lobby.enter_room(waiting.id, OUTSIDER)
-	lobby.enter_room(full.id, OUTSIDER)
-	assert_that(lobby.room_of(OUTSIDER)).is_equal(waiting)
 
 func test_몬스터_모드에서는_NPC도_자리를_차지한다() -> void:
 	var lobby := Lobby.new()
@@ -389,16 +370,6 @@ func test_NPC만_남으면_방이_사라진다() -> void:
 	lobby.leave_room(room.id, 11)
 	assert_that(lobby.find_room(room.id)).is_null()
 
-func test_다른_방으로_옮겨서_비게_된_방은_사라진다() -> void:
-	var lobby := Lobby.new()
-	var left := lobby.create_room()
-	var other := lobby.create_room()
-	_add_character(lobby, 11)
-	lobby.enter_room(left.id, 11)
-	lobby.enter_room(other.id, 11)
-	assert_that(lobby.find_room(left.id)).is_null()
-	assert_that(lobby.find_room(other.id)).is_same(other)
-
 func test_다른_방의_빈_방은_건드리지_않는다() -> void:
 	var lobby := Lobby.new()
 	var untouched := lobby.create_room()
@@ -433,3 +404,31 @@ func test_꽉_찬_방이_배틀_중이면_게임_중으로_알린다() -> void:
 	var room := _room_with_peers(lobby, Room.capacity())
 	room.game_start()
 	assert_that(_status_in_snapshot(lobby, room)).is_equal(RoomStatus.PLAYING)
+
+func test_방에_있는_피어는_다른_방에_입장하지_못한다() -> void:
+	var lobby := Lobby.new()
+	var joined := lobby.create_room()
+	var other := lobby.create_room()
+	_add_character(lobby, 11)
+	lobby.enter_room(joined.id, 11)
+	assert_bool(lobby.enter_room(other.id, 11)).is_false()
+	assert_that(lobby.room_of(11)).is_same(joined)
+	assert_int(joined.characters().size()).is_equal(1)
+	assert_array(other.characters()).is_empty()
+
+func test_혼자_있는_방에_다시_입장하려_해도_방에_그대로_있다() -> void:
+	var lobby := Lobby.new()
+	var room := lobby.create_room()
+	_add_character(lobby, 11)
+	lobby.enter_room(room.id, 11)
+	assert_bool(lobby.enter_room(room.id, 11)).is_false()
+	assert_that(lobby.find_room(room.id)).is_same(room)
+	assert_that(lobby.room_of(11)).is_same(room)
+	assert_int(room.characters().size()).is_equal(1)
+
+func test_함께_있는_방에_다시_입장하려_해도_인원이_그대로다() -> void:
+	var lobby := Lobby.new()
+	var room := _room_with_two_peers(lobby)
+	lobby.enter_room(room.id, 11)
+	assert_that(lobby.room_of(11)).is_same(room)
+	assert_int(room.characters().size()).is_equal(2)
