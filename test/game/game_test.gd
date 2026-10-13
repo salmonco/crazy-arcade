@@ -82,23 +82,21 @@ func test_방에서_나가면_로비_화면이_된다() -> void:
 	assert_bool(_game.lobby_view.visible).is_true()
 	assert_bool(_game.room_view.visible).is_false()
 
-func test_방에서_나가도_방은_로비에_남는다() -> void:
+func test_혼자_있던_방에서_나가면_로비_목록에서_사라진다() -> void:
 	_request_create_room_and_enter_room()
-	var left_room := _current_room()
 	_request_leave_room()
-	_request_enter_room(left_room.id)
-	var current_room := _current_room()
-	assert_that(current_room).is_equal(left_room)
+	assert_int(_server.lobby.room_count()).is_equal(0)
+	assert_int(_game.lobby_view.room_count()).is_equal(0)
 
 func test_로비에_방_수만큼_목록이_보인다() -> void:
-	_create_room_and_leave()
-	_create_room_and_leave()
-	_create_room_and_leave()
+	_create_empty_room()
+	_create_empty_room()
+	_create_empty_room()
 	assert_int(_game.lobby_view.room_count()).is_equal(3)
 
 func test_로비_목록에서_방을_고르면_그_방에_입장한다() -> void:
-	_create_room_and_leave()
-	_create_room_and_leave()
+	_create_empty_room()
+	_create_empty_room()
 	var second_room := _server.lobby.rooms[1]
 	_request_enter_room(second_room.id)
 	var current_room := _current_room()
@@ -368,9 +366,9 @@ func test_다른_방에_들어가면_이전_방의_슬롯이_남지_않는다() 
 	_request_enter_room(empty_room.id)
 	assert_int(_game.room_view.slot_count()).is_equal(1)
 
-func _create_room_and_leave() -> void:
-	_request_create_room_and_enter_room()
-	_request_leave_room()
+func _create_empty_room() -> void:
+	_server.create_room()
+	_sync()
 
 func _room_with_characters(count: int) -> Room:
 	var room := _server.create_room()

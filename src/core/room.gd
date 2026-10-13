@@ -125,6 +125,12 @@ func is_full() -> bool:
 func can_game_start() -> bool:
 	return team_count() >= MINIMUM_TEAM_COUNT_TO_START_BATTLE
 
+func is_empty() -> bool:
+	for character in _characters:
+		if character is not Npc:
+			return false
+	return true
+
 func has_npc() -> bool:
 	for character in _characters:
 		if character is Npc:

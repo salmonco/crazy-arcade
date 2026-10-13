@@ -256,17 +256,14 @@ func test_배틀_중_로컬_멀티_피어가_나가면_2P도_함께_빠진다() 
 	lobby.tick(0.1)
 	assert_that(room.get_battle().winner).is_equal(Color.GREEN)
 
-func test_배틀_중_모두_나가면_방이_배틀에서_풀려난다() -> void:
+func test_배틀_중_모두_나가면_방이_사라진다() -> void:
 	var lobby := Lobby.new()
 	var room := _room_with_two_peers(lobby)
 	room.game_start()
 	lobby.leave_room(room.id, 11)
 	lobby.leave_room(room.id, 22)
-	var step := Battle.GAME_OVER_AFTER_SECOND * 0.6
-	lobby.tick(step) # 승부 판정
-	lobby.tick(step)
-	lobby.tick(step)
-	assert_that(room.get_battle()).is_null()
+	assert_that(lobby.find_room(room.id)).is_null()
+	assert_array(lobby.rooms_in_battle()).is_empty()
 
 func test_상대가_나가서_이긴_피어는_잠시_뒤_방_화면으로_돌아간다() -> void:
 	var lobby := Lobby.new()
@@ -366,3 +363,47 @@ func test_꽉_찬_방에서도_배틀이_시작된다() -> void:
 	var room := _room_with_peers(lobby, Room.capacity())
 	room.game_start()
 	assert_that(room.get_battle()).is_not_null()
+
+# 빈 방
+func test_마지막_사람이_나가면_방이_사라진다() -> void:
+	var lobby := Lobby.new()
+	var room := lobby.create_room()
+	_add_character(lobby, 11)
+	lobby.enter_room(room.id, 11)
+	lobby.leave_room(room.id, 11)
+	assert_that(lobby.find_room(room.id)).is_null()
+	assert_int(lobby.room_count()).is_equal(0)
+
+func test_사람이_남아_있으면_방은_사라지지_않는다() -> void:
+	var lobby := Lobby.new()
+	var room := _room_with_two_peers(lobby)
+	lobby.leave_room(room.id, 11)
+	assert_that(lobby.find_room(room.id)).is_same(room)
+
+func test_NPC만_남으면_방이_사라진다() -> void:
+	var lobby := Lobby.new()
+	var room := lobby.create_room()
+	_add_character(lobby, 11)
+	lobby.enter_room(room.id, 11)
+	room.set_battle_mode(BattleMode.MONSTER)
+	lobby.leave_room(room.id, 11)
+	assert_that(lobby.find_room(room.id)).is_null()
+
+func test_다른_방으로_옮겨서_비게_된_방은_사라진다() -> void:
+	var lobby := Lobby.new()
+	var left := lobby.create_room()
+	var other := lobby.create_room()
+	_add_character(lobby, 11)
+	lobby.enter_room(left.id, 11)
+	lobby.enter_room(other.id, 11)
+	assert_that(lobby.find_room(left.id)).is_null()
+	assert_that(lobby.find_room(other.id)).is_same(other)
+
+func test_다른_방의_빈_방은_건드리지_않는다() -> void:
+	var lobby := Lobby.new()
+	var untouched := lobby.create_room()
+	var room := lobby.create_room()
+	_add_character(lobby, 11)
+	lobby.enter_room(room.id, 11)
+	lobby.leave_room(room.id, 11)
+	assert_that(lobby.find_room(untouched.id)).is_same(untouched)

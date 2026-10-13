@@ -84,10 +84,10 @@ func test_피어가_방에_입장한_상태인데_접속을_끊으면_방과_로
 	_server.on_peer_connected(peer_id)
 	var room := _server.create_room()
 	_server.enter_room(room.id, peer_id)
-	assert_that(_server.lobby.find_room(room.id).find_character(peer_id)).is_not_null()
+	assert_that(room.find_character(peer_id)).is_not_null()
 	assert_that(_server.lobby.find_character(peer_id)).is_not_null()
 	_server.on_peer_disconnected(peer_id)
-	assert_that(_server.lobby.find_room(room.id).find_character(peer_id)).is_null()
+	assert_that(room.find_character(peer_id)).is_null()
 	assert_that(_server.lobby.find_character(peer_id)).is_null()
 
 func test_피어가_접속하고_방에_입장해도_로비엔_해당_피어의_캐릭터가_남아있다() -> void:

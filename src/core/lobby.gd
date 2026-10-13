@@ -60,6 +60,8 @@ func leave_room(room_id: String, peer_id: int) -> bool:
 	if second_player != null:
 		room.remove_character(second_player)
 	room.remove_character(character)
+	if room.is_empty():
+		rooms.erase(room)
 	return true
 
 func tick(delta: float) -> void:
