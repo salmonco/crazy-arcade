@@ -89,6 +89,14 @@ func request_set_character_color(number: int, color: Color) -> void:
 	set_character_color(number, color, multiplayer.get_remote_sender_id())
 	_broadcast()
 
+@rpc("any_peer", "call_remote", "reliable")
+func request_ping(sent_msec: int) -> void:
+	pong.rpc_id(multiplayer.get_remote_sender_id(), sent_msec)
+
+@rpc("authority", "call_remote", "reliable")
+func pong(_sent_msec: int) -> void:
+	pass
+
 @rpc("authority", "call_remote", "reliable")
 func screen_changed(_snapshot: Dictionary) -> void:
 	pass

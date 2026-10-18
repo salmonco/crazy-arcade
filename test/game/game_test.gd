@@ -425,3 +425,13 @@ func test_피어는_자신의_캐릭터_색상을_변경할_수_있다() -> void
 	_request_set_monster_mode(true)
 	_request_start_battle()
 	assert_that(_character_color_in_battle(1)).is_equal(Color.ORANGE)
+
+# 왕복 지연
+func test_pong이_오면_보낸_시각과의_차이를_RTT로_배틀_화면에_알려준다() -> void:
+	_game.on_pong(1000, 1073)
+	assert_float(_game.battle_view.rtt).is_equal_approx(0.073, 0.0001)
+
+func test_RTT는_튀는_값_하나에_휩쓸리지_않는다() -> void:
+	_game.on_pong(1000, 1073)
+	_game.on_pong(2000, 2573) # 한 번 500ms가 튀었다
+	assert_float(_game.battle_view.rtt).is_between(0.073, 0.3)

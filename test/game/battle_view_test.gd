@@ -49,14 +49,15 @@ func test_스냅샷의_캐릭터마다_뷰를_만든다() -> void:
 	assert_that(_battle_view.view_by_character_number[1].position).is_equal(Map.to_pixel_continuous(Vector2(3, 5)))
 	assert_that(_battle_view.view_by_character_number[2].position).is_equal(Map.to_pixel_continuous(Vector2(9, 2)))
 
+# 내 캐릭터는 예측 위치에 그리므로, 서버 위치를 그대로 그리는 남의 캐릭터(NPC)로 확인한다.
 func test_다시_그려도_같은_자리의_뷰는_살아남는다() -> void:
 	_render(_solo_snapshot())
-	var before_view: CharacterView = _battle_view.view_by_character_number[1]
+	var before_view: CharacterView = _battle_view.view_by_character_number[2]
 	var moved := _solo_snapshot()
-	moved["characters"][0]["cell"] = Vector2(4, 5)
+	moved["characters"][1]["cell"] = Vector2(10, 2)
 	_render(moved)
-	assert_that(_battle_view.view_by_character_number[1]).is_same(before_view)
-	assert_that(_battle_view.view_by_character_number[1].position).is_equal(Map.to_pixel_continuous(Vector2(4, 5)))
+	assert_that(_battle_view.view_by_character_number[2]).is_same(before_view)
+	assert_that(_battle_view.view_by_character_number[2].position).is_equal(Map.to_pixel_continuous(Vector2(10, 2)))
 
 func test_목록에서_사라진_캐릭터의_뷰는_지운다() -> void:
 	_render(_solo_snapshot())
@@ -213,3 +214,69 @@ func test_로컬_멀티에서는_좌우_시프트로_각자_물풍선을_놓는�
 	_battle_view.handle_key_pressed(KEY_SHIFT, KEY_LOCATION_LEFT)
 	_battle_view.handle_key_pressed(KEY_SHIFT, KEY_LOCATION_RIGHT)
 	assert_array(sent).is_equal([1, 3])
+
+# 예측
+func _drawn_x(number: int) -> float:
+	return _battle_view.view_by_character_number[number].position.x
+
+func _walk(direction_key: Key, frames: int) -> void:
+	_battle_view.handle_key_pressed(direction_key)
+	for i in frames:
+		_battle_view.tick(0.02)
+
+func test_예측을_켜면_새_스냅샷_없이도_내_캐릭터가_누른_방향으로_움직인다() -> void:
+	_render(_solo_snapshot())
+	_walk(KEY_RIGHT, 5)
+	assert_float(_drawn_x(1)).is_greater(Map.to_pixel_continuous(Vector2(3, 5)).x)
+
+func test_남의_캐릭터는_예측하지_않는다() -> void:
+	_render(_solo_snapshot())
+	_walk(KEY_RIGHT, 5)
+	assert_float(_drawn_x(2)).is_equal(Map.to_pixel_continuous(Vector2(9, 2)).x)
+
+func test_예측을_끄면_스냅샷이_올_때까지_움직이지_않는다() -> void:
+	_battle_view.prediction_enabled = false
+	_render(_solo_snapshot())
+	_walk(KEY_RIGHT, 5)
+	assert_float(_drawn_x(1)).is_equal(Map.to_pixel_continuous(Vector2(3, 5)).x)
+
+func test_예측_중에_RTT만큼_늦은_스냅샷이_와도_내_캐릭터를_되돌리지_않는다() -> void:
+	_battle_view.rtt = 0.1
+	_render(_solo_snapshot())
+	_walk(KEY_RIGHT, 10) # 0.2초 동안 0.8칸 → 3.8
+	var late := _solo_snapshot()
+	late["characters"][0]["cell"] = Vector2(3.4, 5) # 0.1초 전의 위치
+	_render(late)
+	assert_float(_drawn_x(1)).is_greater(Map.to_pixel_continuous(Vector2(3.7, 5)).x)
+
+func test_F2로_예측을_끄고_켠다() -> void:
+	_render(_solo_snapshot())
+	_battle_view.handle_key_pressed(KEY_F2)
+	assert_bool(_battle_view.prediction_enabled).is_false()
+	_battle_view.handle_key_pressed(KEY_F2)
+	assert_bool(_battle_view.prediction_enabled).is_true()
+
+# 입력 지연 측정
+func test_예측을_켜면_스냅샷_없이도_입력_지연이_재진다() -> void:
+	_render(_solo_snapshot())
+	_walk(KEY_RIGHT, 1)
+	assert_int(_battle_view.input_latency.count()).is_equal(1)
+
+func test_예측을_끄면_움직인_스냅샷이_와야_입력_지연이_재진다() -> void:
+	_battle_view.prediction_enabled = false
+	_render(_solo_snapshot())
+	_walk(KEY_RIGHT, 1)
+	assert_int(_battle_view.input_latency.count()).is_equal(0)
+	var moved := _solo_snapshot()
+	moved["characters"][0]["cell"] = Vector2(3.1, 5)
+	_render(moved)
+	assert_int(_battle_view.input_latency.count()).is_equal(1)
+
+func test_탈락해서_맵에_없는_내_캐릭터는_입력_지연을_재지_않는다() -> void:
+	var lost := _solo_snapshot()
+	lost["characters"].remove_at(0)
+	lost["seats"][0]["is_out"] = true
+	_render(lost)
+	_walk(KEY_RIGHT, 1)
+	_render(_solo_snapshot()) # 다음 배틀에서 시작 칸에 다시 나타난다
+	assert_int(_battle_view.input_latency.count()).is_equal(0)

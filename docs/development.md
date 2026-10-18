@@ -28,6 +28,27 @@ brew install --cask godot
 
 배포는 [deployment.md](deployment.md)에 있습니다.
 
+**RPC 함수를 더하거나 빼면 서버와 웹 클라이언트를 같이 배포하세요.** Godot은 RPC를 이름이 아니라
+노드에 선언된 RPC 목록의 순번으로 부릅니다. 한쪽만 바뀌면 엉뚱한 함수가 불리거나 접속이 깨집니다.
+그래서 `Game`과 `Server`는 서로의 RPC를 빈 함수로라도 똑같이 선언합니다.
+
+### 입력 지연 측정
+
+배틀 화면 왼쪽 위에 RTT와 입력 지연(평균, 중앙값, 횟수)이 뜹니다. **F2**로 예측을 켜고 끄며 같은 빌드에서
+before(OFF)/after(ON)를 비교합니다. 끄고 켤 때마다 표본은 초기화됩니다.
+표본 하나하나는 브라우저 콘솔에 `입력 지연 N ms (예측 ON/OFF, RTT N ms)`로 찍힙니다.
+
+사람 손 없이 재려면 측정 봇을 씁니다. 방을 만들고 몬스터 모드로 배틀을 시작한 뒤 좌우로 움직이며
+예측 OFF로 N번, ON으로 N번 재고 표를 찍습니다.
+
+```bash
+godot --headless --path . -s tools/measure_latency.gd -- --samples 20                          # 로컬 서버
+godot --headless --path . -s tools/measure_latency.gd -- --url wss://<게임 서버 도메인> --samples 20  # 배포 서버
+```
+
+입력 지연은 "키를 누른 순간부터 내 캐릭터 뷰의 위치가 처음 바뀐 순간까지"입니다. 화면 출력(vsync)의
+한두 프레임은 OFF/ON 모두 똑같이 더해지므로 빠져 있습니다.
+
 ## 테스트
 
 ```bash
@@ -73,7 +94,7 @@ scenes/       .tscn 씬 파일
 test/core/    순수 로직 테스트 (빠름, 결정론적)
 test/game/    씬 테스트 (scene_runner로 프레임 시뮬레이션)
 docs/         개발 문서
-tools/        에셋을 굽는 스크립트. 게임 실행에는 안 쓰인다
+tools/        에셋을 굽는 스크립트와 측정 봇(measure_latency.gd). 게임 실행에는 안 쓰인다
 addons/gdUnit4/  테스트 프레임워크 (v6.1.3, 커밋에 포함)
 ```
 
@@ -108,3 +129,6 @@ addons/gdUnit4/  테스트 프레임워크 (v6.1.3, 커밋에 포함)
 | 방 항목 | `room_entry` | 로비 화면 방 목록의 한 줄. 누르면 그 방에 입장한다 |
 | 게임 아이템 | `GameItem` | 맵에서 캐릭터가 획득하는 것. 물풍선, 물줄기, 스피드 등 |
 | 방향 | `Direction` | 캐릭터의 이동 방향. 상하좌우 |
+| 예측 | `Prediction` | 서버 응답을 기다리지 않고 클라이언트가 내 캐릭터를 먼저 움직여 그린 위치. 스냅샷이 오면 서버 위치로 보정한다 |
+| 왕복 지연 | `rtt` | 클라이언트가 보낸 ping이 서버를 거쳐 pong으로 돌아오기까지 걸린 시간 |
+| 입력 지연 | `InputLatency` | 이동 키를 누른 순간부터 내 캐릭터가 화면에서 실제로 움직이기 시작한 순간까지 걸린 시간 |

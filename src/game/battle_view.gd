@@ -32,13 +32,19 @@ signal water_balloon_requested(number: int)
 @onready var win_label: Label = $CanvasLayer/WinLabel
 @onready var lose_label: Label = $CanvasLayer/LoseLabel
 @onready var draw_label: Label = $CanvasLayer/DrawLabel
+@onready var latency_label: Label = $CanvasLayer/LatencyLabel
 
 var peer_id: int
 var pressed_move_keys: Array[Key] = []
 var pressed_move_keys_local_multi: Array[Key] = []
 
+var prediction_enabled := true
+var rtt := 0.0 # 초. Game이 ping으로 재서 넣어준다.
+var input_latency := InputLatency.new()
+
 var _snapshot: Dictionary = {}
 var _sent_direction: Dictionary[int, Vector2i] = {}
+var _predictions: Dictionary[int, Prediction] = {}
 
 func _ready() -> void:
 	visibility_changed.connect(sync_overlay)
@@ -47,9 +53,21 @@ func _ready() -> void:
 func sync_overlay() -> void:
 	overlay.visible = visible
 
+func _process(delta: float) -> void:
+	tick(delta)
+
+func tick(delta: float) -> void:
+	if _predictions.is_empty():
+		return
+	var water_balloon_cells := _water_balloon_cells()
+	for number in _predictions:
+		_predictions[number].tick(delta, _sent_direction.get(number, Vector2i.ZERO), water_balloon_cells)
+	_render_characters()
+
 func render(snapshot: Dictionary, my_peer_id: int) -> void:
 	_snapshot = snapshot
 	peer_id = my_peer_id
+	_reconcile_predictions()
 	_render_characters()
 	_render_water_balloons()
 	_render_water_streams()
@@ -65,6 +83,9 @@ func my_character_numbers() -> Array[int]:
 	return numbers
 
 func handle_key_pressed(key: Key, location: KeyLocation = KEY_LOCATION_UNSPECIFIED) -> void:
+	if key == KEY_F2:
+		toggle_prediction()
+		return
 	var game_key := GameKey.from_key(key, location)
 	var numbers := my_character_numbers()
 	if game_key == GameKey.SPACE and numbers.size() == 1:
@@ -91,8 +112,11 @@ func _send_directions() -> void:
 	for index in numbers.size():
 		var number: int = numbers[index]
 		var direction := _direction_for(index, numbers.size())
-		if _sent_direction.get(number, Vector2i.ZERO) == direction:
+		var sent: Vector2i = _sent_direction.get(number, Vector2i.ZERO)
+		if sent == direction:
 			continue
+		if sent == Vector2i.ZERO and _is_on_map(number):
+			input_latency.start(number, _drawn_cell(number), Time.get_ticks_msec())
 		_sent_direction[number] = direction
 		move_requested.emit(number, direction)
 
@@ -119,6 +143,72 @@ func _unhandled_input(event: InputEvent) -> void:
 		else:
 			handle_key_released(key_event.physical_keycode)
 
+func toggle_prediction() -> void:
+	prediction_enabled = not prediction_enabled
+	input_latency.clear()
+	_reconcile_predictions()
+	_render_characters()
+
+# 내 캐릭터마다 예측을 하나씩 두고, 스냅샷이 오면 서버 위치로 보정한다.
+func _reconcile_predictions() -> void:
+	var mine: Array[int] = []
+	if prediction_enabled:
+		mine = my_character_numbers()
+	var alive := {}
+	for character in _snapshot.get("characters", []):
+		var number: int = character["number"]
+		if number not in mine:
+			continue
+		alive[number] = true
+		if number not in _predictions:
+			_predictions[number] = Prediction.new(character["cell"])
+		_predictions[number].sync(character["is_trapped"], character.get("speed", Character.SPEED))
+		_predictions[number].reconcile(character["cell"], rtt)
+	for number in _predictions.keys():
+		if number not in alive:
+			_predictions.erase(number)
+
+# 화면에 그릴 캐릭터. 내 캐릭터는 서버 위치 대신 예측 위치에 그린다.
+func _drawn(character: Dictionary) -> Dictionary:
+	var number: int = character["number"]
+	if number not in _predictions:
+		return character
+	var drawn := character.duplicate()
+	drawn["cell"] = _predictions[number].position()
+	var direction: Vector2i = _sent_direction.get(number, Vector2i.ZERO)
+	if direction != Vector2i.ZERO:
+		drawn["facing"] = direction
+	return drawn
+
+func _drawn_cell(number: int) -> Vector2:
+	if number in _predictions:
+		return _predictions[number].position()
+	for character in _snapshot.get("characters", []):
+		if character["number"] == number:
+			return character["cell"]
+	return Vector2.ZERO
+
+func _is_on_map(number: int) -> bool:
+	for character in _snapshot.get("characters", []):
+		if character["number"] == number:
+			return true
+	return false
+
+func _water_balloon_cells() -> Array[Vector2i]:
+	var cells: Array[Vector2i] = []
+	for water_balloon in _snapshot.get("water_balloons", []):
+		cells.append(water_balloon["cell"])
+	return cells
+
+func _measure_input_latency(drawn: Dictionary) -> void:
+	var latency := input_latency.observe(drawn["number"], drawn["cell"], Time.get_ticks_msec())
+	if latency >= 0:
+		print("입력 지연 %d ms (예측 %s, RTT %d ms)" % [latency, "ON" if prediction_enabled else "OFF", roundi(rtt * 1000)])
+	latency_label.text = "RTT %d ms | 입력 지연 평균 %d ms, 중앙값 %d ms (%d회) | 예측 %s [F2]" % [
+		roundi(rtt * 1000), input_latency.average_msec(), input_latency.median_msec(),
+		input_latency.count(), "ON" if prediction_enabled else "OFF",
+	]
+
 func _seats() -> Array:
 	return _snapshot.get("seats", [])
 
@@ -140,7 +230,10 @@ func _render_characters() -> void:
 			var view: CharacterView = scene.instantiate()
 			view_by_character_number[number] = view
 			character_views.add_child(view)
-		view_by_character_number[number].sync(character)
+		var shown := _drawn(character)
+		view_by_character_number[number].sync(shown)
+		if number in my_character_numbers():
+			_measure_input_latency(shown)
 
 func _render_water_balloons() -> void:
 	for view in water_balloon_views.get_children():

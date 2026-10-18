@@ -193,6 +193,7 @@ func test_배틀_스냅샷은_맵_위의_것과_참가자_명부를_담는다() 
 			{
 				"number": 1, "is_npc": false, "cell": Vector2(1, 6),
 				"color": Color.RED, "facing": Vector2i.DOWN, "is_trapped": false,
+				"speed": Character.SPEED,
 			},
 		],
 		"seats": [
@@ -205,6 +206,12 @@ func test_배틀_스냅샷은_맵_위의_것과_참가자_명부를_담는다() 
 		"winner_color": Color.RED,
 		"is_draw": false,
 	})
+
+func test_배틀_스냅샷은_스피드_아이템으로_빨라진_속도를_담는다() -> void:
+	var room := _room_in_battle()
+	room.characters()[0].get_game_item(GameItem.INCREASE_SPEED)
+	var drawn: Array = room.battle_snapshot()["characters"]
+	assert_float(drawn[0]["speed"]).is_equal(Character.SPEED + 0.5)
 
 func test_배틀_스냅샷에서_탈락한_캐릭터는_그리는_목록에서_빠지고_명부에_남는다() -> void:
 	var snapshot: Dictionary = _room_in_battle().battle_snapshot()

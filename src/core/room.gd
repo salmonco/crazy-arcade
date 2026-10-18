@@ -223,6 +223,7 @@ func battle_snapshot() -> Dictionary:
 			"color": character.color,
 			"facing": character.facing,
 			"is_trapped": character.is_trapped(),
+			"speed": character.speed,
 		})
 	for character in _characters:
 		seats_snapshot.append({

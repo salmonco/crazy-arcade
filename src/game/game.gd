@@ -5,7 +5,13 @@ extends Node
 @onready var room_view: RoomView = $RoomView
 @onready var battle_view: BattleView = $BattleView
 
+const PING_INTERVAL := 0.5
+# 새 RTT 표본을 얼마나 반영하는가. 튀는 표본 하나에 보정이 흔들리지 않게 조금씩 섞는다.
+const RTT_SMOOTHING := 0.2
+
 var peer_id: int
+var _rtt_msec := -1.0
+var _ping_elapsed := 0.0
 
 func _ready() -> void:
 	_create_peer()
@@ -19,6 +25,24 @@ func _ready() -> void:
 	battle_view.move_requested.connect(move)
 	battle_view.water_balloon_requested.connect(place_water_balloon)
 	multiplayer.connected_to_server.connect(on_connected_to_server)
+
+func _process(delta: float) -> void:
+	tick(delta)
+
+func tick(delta: float) -> void:
+	_ping_elapsed += delta
+	if _ping_elapsed < PING_INTERVAL:
+		return
+	_ping_elapsed = 0.0
+	var peer := multiplayer.multiplayer_peer
+	if peer == null or peer.get_connection_status() != MultiplayerPeer.CONNECTION_CONNECTED:
+		return
+	request_ping.rpc_id(1, Time.get_ticks_msec())
+
+func on_pong(sent_msec: int, now_msec: int) -> void:
+	var sample := float(now_msec - sent_msec)
+	_rtt_msec = sample if _rtt_msec < 0.0 else lerpf(_rtt_msec, sample, RTT_SMOOTHING)
+	battle_view.rtt = _rtt_msec / 1000.0
 
 func _create_peer() -> void:
 	var url: String = ProjectSettings.get_setting_with_override("network/server_url")
@@ -67,6 +91,14 @@ func request_place_water_balloon(_number: int) -> void:
 @rpc("any_peer", "call_remote", "reliable")
 func request_set_character_color(_number: int, _color: Color) -> void:
 	pass
+
+@rpc("any_peer", "call_remote", "reliable")
+func request_ping(_sent_msec: int) -> void:
+	pass
+
+@rpc("authority", "call_remote", "reliable")
+func pong(sent_msec: int) -> void:
+	on_pong(sent_msec, Time.get_ticks_msec())
 
 @rpc("authority", "call_remote", "reliable")
 func screen_changed(snapshot: Dictionary) -> void:
