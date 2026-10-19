@@ -49,10 +49,10 @@ while [[ $# -gt 0 ]]; do
 	esac
 done
 
-# export_presets.cfg 는 .gitignore 대상입니다. 클론 직후에는 없어서, 그대로 두면
-# Godot 이 "Unknown export preset" 한 줄만 남기고 끝납니다. 무엇을 해야 하는지 알려줍니다.
+# 프리셋이 없으면 Godot 이 "Unknown export preset" 한 줄만 남기고 끝납니다.
+# 무엇을 해야 하는지 알려줍니다.
 if [[ ! -f "$ROOT/export_presets.cfg" ]]; then
-	echo "export_presets.cfg 가 없습니다. (.gitignore 대상이라 클론에는 안 따라옵니다)" >&2
+	echo "export_presets.cfg 가 없습니다." >&2
 	echo "  ./run -e 로 에디터를 열고 프로젝트 > 내보내기 에서 '$PRESET' 프리셋을 추가하세요." >&2
 	exit 1
 fi
@@ -115,6 +115,21 @@ for f in "$base.html" "$base.js" "$base.wasm" "$base.pck"; do
 		exit 1
 	fi
 done
+
+# Amplitude 키는 project.godot 한 곳에만 둡니다. head_include(export_presets.cfg)에는
+# 자리표시자만 있고, 여기서 진짜 값으로 바꿉니다. 키 없이 나간 빌드는 화면은 멀쩡하고
+# 집계만 조용히 비므로, 어느 단계든 어긋나면 실패시킵니다.
+placeholder="__AMPLITUDE_API_KEY__"
+api_key="$(sed -n 's/^amplitude_api_key="\(.*\)"$/\1/p' "$ROOT/project.godot")"
+if [[ -z "$api_key" ]]; then
+	echo "빌드 실패: project.godot 에 analytics/amplitude_api_key 가 없습니다." >&2
+	exit 1
+fi
+if ! grep -q "$placeholder" "$out_dir/$base.html"; then
+	echo "빌드 실패: $base.html 에 $placeholder 가 없습니다. export_presets.cfg 의 html/head_include 를 확인하세요." >&2
+	exit 1
+fi
+sed -i.bak "s/$placeholder/$api_key/g" "$out_dir/$base.html" && rm -f "$out_dir/$base.html.bak"
 
 echo ""
 echo "빌드 완료: $target"

@@ -422,3 +422,87 @@ func test_배틀이_이어지는_동안에는_로비에_있는_피어에게_보�
 	_battle_room_with_two_peers()
 	_connect(33)
 	assert_array(_server.tick(0.1, [11, 22, 33])).contains_exactly_in_any_order([11, 22])
+
+# 분석
+var _posted: Array = []
+
+func _record_analytics() -> void:
+	_posted = []
+	_server.analytics = Analytics.new("test-key", func(body: String) -> void:
+		_posted.append(JSON.parse_string(body)))
+
+func _sent_events() -> Array:
+	return _posted.map(func(body: Dictionary) -> Dictionary: return body["events"][0])
+
+func _sent_event_types() -> Array:
+	return _sent_events().map(func(event: Dictionary) -> String: return event["event_type"])
+
+func test_방을_만들면_만든_피어의_기기_ID로_room_created를_보낸다() -> void:
+	_record_analytics()
+	_connect(11)
+	_connect(22)
+	_server.analytics.register_device(11, "device-eleven")
+	_server.analytics.register_device(22, "device-twenty-two")
+	_server.create_room_and_enter(22)
+	assert_array(_sent_event_types()).contains_exactly(["room_created"])
+	assert_str(_sent_events()[0]["device_id"]).is_equal("device-twenty-two")
+
+func test_방_만들기에_실패하면_보내지_않는다() -> void:
+	_record_analytics()
+	_connect(11)
+	_server.analytics.register_device(11, "device-eleven")
+	_server.create_room_and_enter(11)
+	_server.create_room_and_enter(11)
+	assert_array(_sent_event_types()).contains_exactly(["room_created"])
+
+func test_배틀이_시작되면_배틀_모드와_함께_battle_started를_보낸다() -> void:
+	_record_analytics()
+	_connect(11)
+	_server.analytics.register_device(11, "device-eleven")
+	_server.create_room_and_enter(11)
+	_server.set_monster_mode(true, 11)
+	_server.start_battle(11)
+	assert_array(_sent_event_types()).contains_exactly(["room_created", "battle_started"])
+	var started: Dictionary = _sent_events()[1]
+	assert_str(started["device_id"]).is_equal("device-eleven")
+	assert_str(started["event_properties"]["battle_mode"]).is_equal(String(BattleMode.MONSTER))
+
+func test_로컬_멀티_배틀이면_battle_mode가_LOCAL_MULTI다() -> void:
+	_record_analytics()
+	_connect(11, Color.RED)
+	_connect(22, Color.GREEN)
+	_server.analytics.register_device(11, "device-eleven")
+	var room: Room = _server.create_room_and_enter(11)
+	_server.enter_room(room.id, 22)
+	_server.start_battle(11)
+	assert_array(_sent_event_types()).contains_exactly(["room_created", "battle_started"])
+	assert_str(_sent_events()[1]["event_properties"]["battle_mode"]).is_equal(String(BattleMode.LOCAL_MULTI))
+
+func test_배틀이_시작되지_않으면_battle_started를_보내지_않는다() -> void:
+	_record_analytics()
+	var room := _server.create_room()
+	for peer_id in [11, 22]:
+		_connect(peer_id, Color.RED)
+		_server.analytics.register_device(peer_id, "device-%d" % peer_id)
+		_server.enter_room(room.id, peer_id)
+	_server.start_battle(11)
+	assert_array(_sent_event_types()).is_empty()
+
+func test_배틀_중에_시작_요청이_또_와도_battle_started는_한_번이다() -> void:
+	_record_analytics()
+	_connect(11)
+	_server.analytics.register_device(11, "device-eleven")
+	_server.create_room_and_enter(11)
+	_server.set_monster_mode(true, 11)
+	_server.start_battle(11)
+	_server.start_battle(11)
+	assert_array(_sent_event_types()).contains_exactly(["room_created", "battle_started"])
+
+func test_접속이_끊기면_그_피어의_기기_ID를_잊는다() -> void:
+	_record_analytics()
+	_connect(11)
+	_server.analytics.register_device(11, "device-eleven")
+	_server.on_peer_disconnected(11)
+	_connect(11)
+	_server.create_room_and_enter(11)
+	assert_array(_sent_event_types()).is_empty()

@@ -40,7 +40,7 @@ while [[ $# -gt 0 ]]; do
 done
 
 if [[ ! -f "$ROOT/export_presets.cfg" ]] || ! grep -q "^name=\"$PRESET\"" "$ROOT/export_presets.cfg"; then
-	echo "export_presets.cfg 에 '$PRESET' 프리셋이 없습니다. (.gitignore 대상이라 클론에는 안 따라옵니다)" >&2
+	echo "export_presets.cfg 에 '$PRESET' 프리셋이 없습니다." >&2
 	echo "  만드는 법은 docs/deployment.md 의 '프로젝트 쪽 설정'을 보세요." >&2
 	exit 1
 fi

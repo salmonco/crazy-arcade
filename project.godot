@@ -8,6 +8,10 @@
 
 config_version=5
 
+[analytics]
+
+amplitude_api_key="5a0bf29a98652578fb7f0e1bc9dc3c04"
+
 [application]
 
 config/name="Petit Crazy Arcade"

@@ -4,6 +4,7 @@ extends Node
 const PORT := 8080
 
 var lobby := Lobby.new()
+var analytics := Analytics.new(Analytics.configured_api_key(), Analytics.http_post.bind(self))
 
 func _ready() -> void:
 	_create_peer()
@@ -38,6 +39,7 @@ func on_peer_connected(id: int) -> void:
 
 func on_peer_disconnected(id: int) -> void:
 	print("피어 접속 끊김: %d" % id)
+	analytics.forget_device(id)
 	var character := lobby.find_character(id)
 	if character == null:
 		return
@@ -45,6 +47,10 @@ func on_peer_disconnected(id: int) -> void:
 		leave_room(id)
 	lobby.remove_character(character)
 	_broadcast()
+
+@rpc("any_peer", "call_remote", "reliable")
+func request_register_device(device_id: String) -> void:
+	analytics.register_device(multiplayer.get_remote_sender_id(), device_id)
 
 @rpc("any_peer", "call_remote", "reliable")
 func request_create_room() -> void:
@@ -102,6 +108,7 @@ func create_room_and_enter(peer_id: int) -> Room:
 		return null
 	var room := create_room()
 	enter_room(room.id, peer_id)
+	analytics.track(peer_id, "room_created")
 	return room
 
 func enter_room(room_id: String, peer_id: int) -> void:
@@ -115,9 +122,11 @@ func leave_room(peer_id: int) -> void:
 
 func start_battle(peer_id: int) -> void:
 	var room := lobby.room_of(peer_id)
-	if room == null:
+	if room == null or room.get_battle() != null:
 		return
 	room.game_start()
+	if room.get_battle() != null:
+		analytics.track(peer_id, "battle_started", {"battle_mode": String(room.battle_mode)})
 
 func finish_battle(peer_id: int) -> void:
 	var room := lobby.room_of(peer_id)

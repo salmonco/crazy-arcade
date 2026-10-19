@@ -31,6 +31,11 @@ func _create_peer() -> void:
 
 func on_connected_to_server() -> void:
 	peer_id = multiplayer.get_unique_id()
+	request_register_device.rpc_id(1, Analytics.browser_device_id())
+
+@rpc("any_peer", "call_remote", "reliable")
+func request_register_device(_device_id: String) -> void:
+	pass
 
 @rpc("any_peer", "call_remote", "reliable")
 func request_create_room() -> void:
