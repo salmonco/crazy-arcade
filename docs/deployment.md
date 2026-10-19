@@ -24,9 +24,11 @@ DB는 없습니다. 로비·방·캐릭터는 전부 서버 메모리에 있고,
 - **`application/run/main_scene.dedicated_server`** = `res://scenes/server.tscn`
   서버용으로 내보낸 빌드는 클라이언트(`game.tscn`)가 아니라 서버 씬으로 시작합니다.
 - **`network/server_url`** = `ws://localhost:8080`, **`network/server_url.web`** = `wss://<게임 서버 도메인>`
-  웹 빌드만 배포 서버로 접속합니다. 로컬에서 띄운 웹 빌드도 배포 서버로 붙는다는 점에 주의하세요.
+  웹 빌드만 배포 서버로 접속합니다. 로컬에서 띄운 웹 빌드도 배포 서버로 붙고 Amplitude에도 집계된다는 점에 주의하세요.
 - 내보내기 프리셋 **`Linux Server`**: 플랫폼 Linux, 아키텍처 x86_64, PCK 임베드, 리소스 탭의 내보내기 모드는 "Export as dedicated server", 경로는 `server-build/`.
-  `export_presets.cfg`는 `.gitignore` 대상이라 클론에는 없습니다. 위 값대로 다시 만드세요.
+  프리셋은 저장소의 `export_presets.cfg`에 있습니다. 비밀값(키스토어 비밀번호 등)은 Godot 4가
+  `.godot/export_credentials.cfg`에 따로 두므로 이 파일은 커밋해도 됩니다. 모바일 프리셋을 추가하면
+  커밋 전에 diff로 비밀값이 섞이지 않았는지 한 번 보세요.
   Linux 내보내기 템플릿이 필요합니다(편집기 → 내보내기 템플릿 관리에서 Linux와 Web 체크).
 
 ## 함정 (실제로 겪은 것들)

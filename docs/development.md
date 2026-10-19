@@ -57,8 +57,8 @@ brew install --cask godot
 결과물은 `file://`로 열리지 않습니다. Godot이 `.pck`를 fetch로 읽는데 `file://`은 CORS에
 막힙니다. HTTP로 띄우세요. 빌드가 끝나면 그 명령을 찍어줍니다.
 
-`export_presets.cfg`는 `.gitignore` 대상이라 클론에는 안 따라옵니다. 없으면 `./build-web`이
-무엇을 해야 하는지 알려주고 멈춥니다.
+내보내기 프리셋(`export_presets.cfg`)은 저장소에 있습니다. Amplitude SDK 태그(`html/head_include`)도
+여기 들어 있으니 빌드할 때 따로 챙길 것은 없습니다.
 
 루트의 `./t`, `./run`, `./build-web`, `./build-server`, `./deploy-server`는 같은 이름의
 `bin/*.sh`(`./t`는 `bin/test.sh`)를 부르는 한 줄짜리 단축 실행기입니다. 플래그는 자유롭게
@@ -69,9 +69,11 @@ brew install --cask godot
 ```
 src/core/     게임 규칙. RefCounted 기반, 엔진 의존 없음. 로직 대부분이 여기 살아야 함
 src/game/     Node 레이어. 엔진에 배선하는 얇은 껍데기
+src/analytics/ Amplitude 연동(이벤트 형식, 기기 ID, 전송). 언제 보낼지는 Server가 정함. src/core는 쓰지 않음
 scenes/       .tscn 씬 파일
 test/core/    순수 로직 테스트 (빠름, 결정론적)
 test/game/    씬 테스트 (scene_runner로 프레임 시뮬레이션)
+test/analytics/ 이벤트 형식과 기기 ID 규칙 테스트. 언제 보내는지는 test/game/server_test.gd의 # 분석
 docs/         개발 문서
 tools/        에셋을 굽는 스크립트. 게임 실행에는 안 쓰인다
 addons/gdUnit4/  테스트 프레임워크 (v6.1.3, 커밋에 포함)
